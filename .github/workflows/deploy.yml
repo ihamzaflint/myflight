@@ -1,0 +1,33 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - staging  # This can be any branch you want to trigger the workflow on
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan -H 38.242.194.135 >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh myflight@38.242.194.135 << 'EOF'
+          cd /home/myflight/Programming/Odoo/odoo_18/env/myflight/addons  # Update this path as needed
+          sudo systemctl stop myflight.service  # stop instance
+          git pull origin staging  # Pull latest code
+          sudo systemctl start myflight.service  # Restart Odoo service
+          EOF
+
