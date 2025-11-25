@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <!--Booking configuration-->
+    <record id="booking_conf_base" model="booking.conf">
+        <field name="name">Base</field>
+    </record>
+
+    <record id="booking_conf_flight" model="booking.conf">
+        <field name="name">Flight</field>
+    </record>
+
+    <record id="booking_conf_hotel" model="booking.conf">
+        <field name="name">Hotel</field>
+    </record>
+
+    <record id="flight_stop0" model="flight.stop">
+        <field name="name">0</field>
+        <field name="value">0</field>
+    </record>
+
+    <record id="flight_stop1" model="flight.stop">
+        <field name="name">1</field>
+        <field name="value">1</field>
+    </record>
+
+    <record id="flight_stop2" model="flight.stop">
+        <field name="name">2</field>
+        <field name="value">2</field>
+    </record>
+
+    <record id="flight_stop3" model="flight.stop">
+        <field name="name">3</field>
+        <field name="value">3</field>
+    </record>
+
+    <record id="flight_stop4" model="flight.stop">
+        <field name="name">4</field>
+        <field name="value">4</field>
+    </record>
+
+    <record id="flight_stop5" model="flight.stop">
+        <field name="name">5</field>
+        <field name="value">5</field>
+    </record>
+
+    <record id="flight_stop6" model="flight.stop">
+        <field name="name">6</field>
+        <field name="value">6</field>
+    </record>
+
+    <record id="flight_stop7" model="flight.stop">
+        <field name="name">7</field>
+        <field name="value">7</field>
+    </record>
+
+    <record id="flight_stop8" model="flight.stop">
+        <field name="name">8</field>
+        <field name="value">8</field>
+    </record>
+
+    <record id="flight_stop9" model="flight.stop">
+        <field name="name">9</field>
+        <field name="value">9</field>
+    </record>
+
+    <record id="flight_stop10" model="flight.stop">
+        <field name="name">10</field>
+        <field name="value">10</field>
+    </record>
+
+    <record id="flight_stop11" model="flight.stop">
+        <field name="name">11</field>
+        <field name="value">11</field>
+    </record>
+
+    <record id="flight_stop12" model="flight.stop">
+        <field name="name">12</field>
+        <field name="value">12</field>
+    </record>
+
+    <record id="flight_stop13" model="flight.stop">
+        <field name="name">13</field>
+        <field name="value">13</field>
+    </record>
+
+    <record id="flight_stop14" model="flight.stop">
+        <field name="name">14</field>
+        <field name="value">14</field>
+    </record>
+
+    <record id="flight_stop15" model="flight.stop">
+        <field name="name">15</field>
+        <field name="value">15</field>
+    </record>
+</odoo>

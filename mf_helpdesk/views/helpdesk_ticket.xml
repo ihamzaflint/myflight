@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mf_helpdesk_inherit" model="ir.ui.view">
+        <field name="name">mf.helpdesk.inherit.hr</field>
+        <field name="model">helpdesk.ticket</field>
+        <field name="inherit_id" ref="helpdesk.helpdesk_ticket_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                 <field name="service_requested" required="True"/>
+
+                 <field name="flight_ticket_type" invisible="service_requested != 'flight'" required="service_requested == 'flight'"/>
+                 <field name="departure_date" class="oe_inline col-sm-2" invisible="flight_ticket_type != 'oneway' or service_requested != 'flight'" required="service_requested == 'flight' and flight_ticket_type == 'oneway'"/>
+                 <div invisible="service_requested != 'flight' or flight_ticket_type == 'oneway'">
+                    <div>
+                        <strong>Depart</strong>
+                        <field name="departure_date" class="oe_inline col-sm-2" nolabel="1" required="service_requested == 'flight' and flight_ticket_type == 'twoway'"/>
+                        <strong>Return</strong> <field name="return_date" class="oe_inline col-sm-2" required="service_requested == 'flight' and flight_ticket_type == 'twoway'"/>
+                    </div>
+                 </div>
+                <div invisible="not service_requested or service_requested != 'hotel'">
+                    <div>
+                        <strong>Check-in From</strong>
+                        <field name="check_in" class="oe_inline col-sm-2" nolabel="1" required="service_requested == 'hotel'"/>
+                        <strong>Check-out On</strong> <field name="check_out" class="oe_inline col-sm-2" required="service_requested == 'hotel'"/>
+                    </div>
+                 </div>
+
+            </xpath>
+        </field>
+    </record>
+</odoo>
