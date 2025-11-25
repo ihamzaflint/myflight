@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--View to add rooms-->
+    <record id="view_hotel_room_search_traveller_add_room_form" model="ir.ui.view">
+        <field name="name">hotel.room.search.traveller.add.room.form</field>
+        <field name="model">hotel.room.search</field>
+        <field name="arch" type="xml">
+            <form string="Add Rooms">
+                <notebook>
+                    <page name="traveller_line_ids" string="Add Travellers">
+                        <field name="traveller_line_ids">
+                            <list>
+                                <field name="adults"/>
+                                <field name="children"/>
+                                <field name="children_ages"/>
+                            </list>
+
+                            <form>
+                                <group>
+                                    <field name="adults"/>
+                                    <field name="children"/>
+                                    <field name="children_ages" readonly="children == 0" placeholder="Age1, Age2......."/>
+                                </group>
+                            </form>
+                        </field>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- View to add Guest Details in Room-->
+    <record id="view_hotel_room_search_traveller_guest_details_form" model="ir.ui.view">
+        <field name="name">hotel.room.search.traveller.guest.details.form</field>
+        <field name="model">hotel.room.search</field>
+        <field name="arch" type="xml">
+            <form string="Add Rooms">
+                <notebook>
+                    <page name="traveller_line_ids" string="Add Travellers">
+                        <field name="traveller_line_ids">
+                            <list>
+                                <field name="adults"/>
+                                <field name="children"/>
+                                <field name="children_ages"/>
+                            </list>
+
+                            <form>
+                                <group>
+                                    <field name="adults" readonly="1"/>
+                                    <field name="children" readonly="1"/>
+                                    <field name="children_ages" readonly="children == 0" placeholder="Age1, Age2......."/>
+                                </group>
+
+                                <notebook>
+                                    <page name="hotel_room_guest_detail_line_ids" string="Guest Details">
+                                        <field name="hotel_room_guest_detail_line_ids">
+                                            <list>
+                                                <field name="title"/>
+                                                <field name="partner_id"/>
+                                                <field name="first_name"/>
+                                                <field name="last_name"/>
+                                                <field name="traveller_type"/>
+                                            </list>
+
+                                            <form>
+                                                <group>
+                                                    <group>
+                                                        <field name="title"/>
+                                                        <field name="partner_id"/>
+                                                    </group>
+
+                                                    <group>
+                                                        <field name="first_name"/>
+                                                        <field name="last_name"/>
+                                                        <field name="traveller_type"/>
+                                                    </group>
+                                                </group>
+                                            </form>
+                                        </field>
+                                    </page>
+                                </notebook>
+                            </form>
+                        </field>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+
+
+    <record id="view_hotel_room_search_form" model="ir.ui.view">
+        <field name="name">hotel.room.search.form</field>
+        <field name="model">hotel.room.search</field>
+        <field name="arch" type="xml">
+            <form string="Hotel Search">
+
+                <sheet>
+
+                    <!-- 🔹 Search Filters Section -->
+                    <group string="Search Filters" col="2">
+
+                        <group>
+                            <field name="check_in" required="1"/>
+                            <field name="check_out" required="1"/>
+                            <field name="country_id"
+                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
+                                   required="1"/>
+                            <field name="city_id" required="1" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
+
+                        </group>
+
+                        <group>
+                            <group>
+                                <field name="total_adults"/>
+                                <field name="total_children"/>
+                                <field name="total_rooms"/>
+                            </group>
+
+                            <group>
+                                <button name="action_open_travellers"
+                                    type="object"
+                                    string="Add Travellers"
+                                    class="btn-primary"/>
+
+                                <button type="object"
+                                        name="action_search_hotel_rooms"
+                                        string="Search"
+                                        class="btn-primary"/>
+                            </group>
+
+
+                        </group>
+
+                        <group>
+                            <field name="hotel_ids"
+                                   widget="many2many_tags"
+                                   required="0"
+                                   string="Select Hotels"
+                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+
+
+                    <!-- 🔹 Only show notebook after search -->
+                    <notebook invisible="state in ['draft']">
+
+                        <!-- 🔹 Search Result Page -->
+                        <page string="Available Rooms">
+
+                            <field name="line_ids"
+                                   readonly="1"
+                                   nolabel="1"
+                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}">
+
+                                <list string="Rooms">
+                                    <field name="name"/>
+                                    <field name="price"/>
+                                    <field name="meal_type"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="booking_code" column_invisible="1"/>
+                                    <field name="raw_json_data" column_invisible="1"/>
+                                    <button name="action_select_room" string="Select" type="object"
+                                            class="btn-primary"/>
+                                </list>
+
+                                <form string="Room Details">
+                                    <group col="2">
+                                        <field name="name"/>
+                                        <field name="price"/>
+                                        <field name="meal_type"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </group>
+                                </form>
+
+                            </field>
+
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hotel_room_search_list" model="ir.ui.view">
+        <field name="name">hotel.room.search.list</field>
+        <field name="model">hotel.room.search</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="country_id"/>
+                <field name="total_adults"/>
+                <field name="total_rooms"/>
+                <field name="total_children"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_hotel_room_search" model="ir.actions.act_window">
+        <field name="name">Hotels</field>
+        <field name="res_model">hotel.room.search</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('my_flight_integration.view_hotel_room_search_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('my_flight_integration.view_hotel_room_search_form')})
+        ]"/>
+    </record>
+
+
+    <menuitem id="menu_booking_hotel_rooms" name="Hotel Rooms" parent="menu_hotel" action="action_hotel_room_search" sequence="2"/>
+</odoo>

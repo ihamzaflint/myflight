@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iata_code_form_list" model="ir.ui.view">
+        <field name="name">iata.code.list</field>
+        <field name="model">iata.code</field>
+        <field name="arch" type="xml">
+            <list editable="top">
+                <field name="city"/>
+                <field name="country"/>
+                <field name="code"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_iata_code" model="ir.actions.act_window">
+        <field name="name">IATA Code</field>
+        <field name="res_model">iata.code</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_iata_code" name="IATA Code" action="action_iata_code" parent="menu_booking_conf_main" sequence="3" groups="base.group_no_one"/>
+
+</odoo>

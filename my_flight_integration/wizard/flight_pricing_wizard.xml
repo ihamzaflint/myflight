@@ -1,0 +1,172 @@
+<odoo>
+    <record id="view_flight_pricing_wizard_form" model="ir.ui.view">
+        <field name="name">flight.pricing.wizard.form</field>
+        <field name="model">flight.pricing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Flight Price Details" version="7.0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="base_price"/>
+                            <field name="total_price"/>
+                            <field name="currency"/>
+                            <field name="total_travels"/>
+                            <field name="total_adults"/>
+                            <field name="total_childs"/>
+                            <field name="flight_search_line_id"/>
+                        </group>
+                        <group>
+                            <field name="fare_type"/>
+                            <field name="validating_airline"/>
+                            <field name="refundable_taxes"/>
+                        </group>
+
+                        <group string="Tax Summary">
+                            <field name="tax_summary" widget="text" nolabel="1"/>
+                        </group>
+                        <notebook>
+                            <page string="Travellers" name="travellers_ids">
+                                <field name="travellers_ids" widget="section_and_note_one2many" >
+                                    <list create="0" delete="0">
+                                        <field name="firstname"/>
+                                        <field name="lastname"/>
+                                        <field name="gender"/>
+                                        <field name="traveller_type"/>
+                                        <field name="email"/>
+                                        <field name="phone"/>
+                                        <field name="mobile"/>
+                                    </list>
+                                    <form>
+                                        <sheet>
+                                            <group>
+                                                <group>
+                                                    <field name="firstname"/>
+                                                    <field name="lastname"/>
+                                                    <field name="gender"/>
+                                                    <field name="birth_date"/>
+                                                </group>
+                                                <group>
+                                                    <field name="email" required="traveller_type == 'ADULT'"/>
+                                                    <field name="phone"/>
+                                                    <field name="mobile" required="traveller_type == 'ADULT'"/>
+                                                    <field name="traveller_country_id" required="1"/>
+                                                    <field name="traveller_type" readonly="True"/>
+                                                </group>
+                                            </group>
+                                            <hr width="100%" style="background-color:rgb(204,204,204);border:medium none;clear:both;display:block;font-size:0px;min-height:1px;line-height:0; margin:16px 0px 16px 0px;"/>
+                                            <group string="Emergency Contact">
+                                                <group>
+                                                    <field name="emg_address"/>
+                                                    <field name="emg_country_id"/>
+                                                    <field name="emg_country_code" readonly="True"/>
+                                                </group>
+                                                <group>
+                                                    <field name="emg_number"/>
+                                                    <field name="emg_text"/>
+                                                </group>
+                                            </group>
+                                            <notebook>
+                                                <page string="Travellers Documents" name="documents">
+                                                    <field name="traveller_docs" widget="section_and_note_one2many">
+                                                        <list>
+                                                            <field name="document_type"/>
+                                                            <field name="birth_place"/>
+                                                            <field name="issuance_location"/>
+                                                            <field name="issuance_date"/>
+                                                            <field name="number"/>
+                                                            <field name="expiry_date"/>
+                                                            <field name="issuance_country"/>
+                                                            <field name="validity_country"/>
+                                                            <field name="nationality_country"/>
+                                                            <field name="holder"/>
+                                                        </list>
+                                                        <form>
+                                                            <sheet>
+                                                                <group>
+                                                                    <group>
+                                                                        <field name="document_type"/>
+                                                                        <field name="birth_place"/>
+                                                                        <field name="issuance_location"/>
+                                                                        <field name="issuance_date"/>
+                                                                        <field name="number"/>
+                                                                    </group>
+                                                                    <group>
+                                                                        <field name="expiry_date"/>
+                                                                        <field name="issuance_country"/>
+                                                                        <field name="validity_country"/>
+                                                                        <field name="nationality_country"/>
+                                                                        <field name="holder"/>
+                                                                        <field name="attachment_ids" widget="many2many_binary"/>
+                                                                    </group>
+                                                                </group>
+                                                            </sheet>
+                                                        </form>
+
+                                                    </field>
+                                                </page>
+                                            </notebook>
+                                        </sheet>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="Communication Person" name="communication_ids">
+                                <field name="communication_ids" widget="section_and_note_one2many" >
+                                    <list>
+                                        <field name="cc_firstname"/>
+                                        <field name="cc_lastname"/>
+                                        <field name="cc_company_name"/>
+                                        <field name="cc_purpose"/>
+                                        <field name="cc_email"/>
+                                        <field name="cc_phone"/>
+                                        <field name="cc_mobile"/>
+                                    </list>
+                                    <form>
+                                        <sheet>
+                                            <group>
+                                                <group>
+                                                    <field name="cc_firstname"/>
+                                                    <field name="cc_lastname"/>
+                                                    <field name="cc_company_name"/>
+                                                    <field name="cc_purpose"/>
+                                                </group>
+                                                <group>
+                                                    <field name="cc_email"/>
+                                                    <field name="cc_phone"/>
+                                                    <field name="cc_mobile"/>
+                                                    <label for="cc_street" string="Address"/>
+                                                    <div class="o_address_format">
+                                                        <field name="cc_street" placeholder="Street..." class="o_address_street"/>
+                                                        <field name="cc_street2" placeholder="Street 2..." class="o_address_street"/>
+                                                        <field name="cc_city" placeholder="City" class="o_address_city"/>
+                                                        <field name="cc_state_id" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'default_country_id': cc_country_id}"/>
+                                                        <field name="cc_zip" placeholder="ZIP" class="o_address_zip"/>
+                                                        <field name="cc_country_id" placeholder="Country" class="o_address_country" options='{"no_open": True, "no_create": True}'/>
+                                                    </div>
+                                                </group>
+                                            </group>
+                                        </sheet>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+
+                    </group>
+                </sheet>
+
+
+                <field name="raw_pricing_json" readonly="1" invisible="1"/>
+                <footer>
+                    <button type="object" name="action_confirm" string="Confirm" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_flight_pricing_wizard" model="ir.actions.act_window">
+        <field name="name">Flight Price Details</field>
+        <field name="res_model">flight.pricing.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

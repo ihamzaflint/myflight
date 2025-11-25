@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_flight_search_form" model="ir.ui.view">
+        <field name="name">flight.search.form</field>
+        <field name="model">flight.search</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <label for="origin_id" string="From"/>
+                    <field name="origin_id" required="1"
+                           options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                    <label for="destination_id" string="To"/>
+                    <field name="destination_id" required="1"
+                           options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                    <label for="travel_date" string="Date"/>
+                    <field name="travel_date" required="1"/>
+                    <label for="travel_return_date" string="Return" invisible="trip_type == 'oneway'"/>
+                    <field name="travel_return_date" invisible="trip_type == 'oneway'"
+                           required="trip_type == 'return'"/>
+                    <button type="object" name="action_search_flight" string="Search" class="btn btn-primary"/>
+                    <br/>
+                    <br/>
+                    <label for="trip_type"/>
+                    <field name="trip_type" nolabel="1"/>
+<!--                    <button class="btn btn-info" type="object" invisible="trip_type == 'oneway'"-->
+<!--                            name="action_flight_travel_class_wizard" icon="fa-users">-->
+<!--                        <field name="ticket_counts" widget="statinfo" nolabel="1"/>-->
+<!--                    </button>-->
+                    <label for="flight_stop_ids" string="Stops"/>
+                    <field name="flight_stop_ids" widget="many2many_tags"
+                           options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                    <br/>
+                    <br/>
+                    <label for="adults"/>
+                    <field name="adults" nolabel="1" min="1"/>
+                    <label for="children"/>
+                    <field name="children" nolabel="1"/>
+                    <label for="held_infant"/>
+                    <field name="held_infant" nolabel="1"/>
+                    <label for="seated_infant"/>
+                    <field name="seated_infant" nolabel="1"/>
+                    <label for="cabin_class"/>
+                    <field name="cabin_class" nolabel="1"/>
+                    <br/>
+                    <notebook invisible="state in ['draft']">
+                        <page name="flight_search_result" string="Search Result">
+                            <field name="flight_search_line_ids" readonly="1"
+                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="price"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="location"/>
+                                    <field name="stops"/>
+                                    <field name="duration"/>
+                                    <field name="raw_json_data" column_invisible="1" readonly="1"/>
+
+                                    <button type="object" name="action_search_flight_price" string="Select"/>
+                                </list>
+
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="location"/>
+                                        </group>
+                                        <group>
+                                            <field name="price"/>
+                                            <field name="stops"/>
+                                            <field name="duration"/>
+                                        </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_flight_search_list" model="ir.ui.view">
+        <field name="name">flight.search.list</field>
+        <field name="model">flight.search</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="origin_id"/>
+                <field name="destination_id"/>
+                <field name="travel_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_flight_search" model="ir.actions.act_window">
+        <field name="name">Flights</field>
+        <field name="res_model">flight.search</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('my_flight_integration.view_flight_search_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('my_flight_integration.view_flight_search_form')})
+        ]"/>
+
+
+    </record>
+    <menuitem id="menu_flight_search"
+              name="Flight"
+              parent="menu_booking"
+              action="action_flight_search"
+              sequence="1"/>
+
+</odoo>

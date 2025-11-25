@@ -1,0 +1,187 @@
+<odoo>
+    <!-- Tree View -->
+    <record id="view_air_ticket_tree" model="ir.ui.view">
+        <field name="name">air.ticket.tree</field>
+        <field name="model">air.ticket</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="booking_date"/>
+                <field name="flight_offer"/>
+                <field name="total_amount"/>
+                <field name="currency"/>
+                <field name="provider_id"/>
+                <field name="flight_search_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_air_ticket_form" model="ir.ui.view">
+        <field name="name">air.ticket.form</field>
+        <field name="model">air.ticket</field>
+        <field name="arch" type="xml">
+            <form string="Air Ticket">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="reference" readonly="1"/>
+<!--                            <field name="total_amount" readonly="1"/>-->
+<!--                            <field name="base_price" readonly="1"/>-->
+<!--                            <field name="total_tax" readonly="1"/>-->
+                            <field name="flight_search_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="booking_date" readonly="1"/>
+                            <field name="flight_offer" readonly="1"/>
+                            <field name="currency" readonly="1"/>
+                            <field name="provider_id" readonly="1" options='{"no_open": True, "no_create": True}'/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Pricings" name="travel_pricing_lines">
+                            <field name="travel_pricing_lines" widget="section_and_note_one2many" >
+                                <list create="0" delete="0">
+                                    <field name="travel_id"/>
+                                    <field name="fare_option"/>
+                                    <field name="traveler_type"/>
+                                    <field name="associated_adult_id"/>
+
+                                </list>
+                                <form string="Traveler Pricing">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="travel_id"/>
+                                                <field name="fare_option"/>
+                                                <field name="traveler_type"/>
+                                                <field name="associated_adult_id"/>
+                                                <field name="base_amount"/>
+                                                <field name="total_tax"/>
+                                                <field name="total_amount"/>
+                                                <field name="refundable_tax"/>
+                                            </group>
+                                        </group>
+
+                                        <!-- SEGMENTS -->
+                                        <notebook>
+                                            <page string="Segments">
+                                                <field name="segment_ids">
+                                                    <list create="0">
+                                                        <field name="segment_id"/>
+                                                        <field name="cabin"/>
+                                                        <field name="fare_basis"/>
+                                                        <field name="t_class"/>
+                                                        <field name="weight"/>
+                                                        <field name="weight_unit"/>
+                                                    </list>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Travellers" name="travelers_ids">
+                            <field name="travelers_ids" widget="section_and_note_one2many" >
+                                <list create="0">
+                                    <field name="firstname"/>
+                                    <field name="lastname"/>
+                                    <field name="gender"/>
+                                    <field name="birth_date"/>
+<!--                                    <field name="traveller_type"/>-->
+                                    <field name="email"/>
+                                </list>
+                                <form string="Traveler Details">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="firstname"/>
+                                                <field name="lastname"/>
+                                                <field name="gender"/>
+                                                <field name="birth_date"/>
+<!--                                                <field name="traveller_type"/>-->
+                                                <field name="email"/>
+                                                <field name="phone"/>
+                                                <field name="mobile"/>
+                                                <field name="attachment_ids" widget="many2many_binary"/>
+                                            </group>
+                                        </group>
+
+                                        <!-- Documents Tab -->
+                                        <notebook>
+                                            <page string="Documents">
+                                                <field name="doc_ids">
+                                                    <list create="0">
+                                                        <field name="document_type"/>
+                                                        <field name="birth_place"/>
+                                                        <field name="issuance_location"/>
+                                                        <field name="issuance_date"/>
+                                                        <field name="number"/>
+                                                        <field name="expiry_date"/>
+                                                        <field name="issuance_country"/>
+                                                        <field name="validity_country"/>
+                                                        <field name="nationality_country"/>
+                                                        <field name="holder"/>
+                                                    </list>
+                                                </field>
+                                            </page>
+                                        </notebook>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Basic Info" name="basic_info">
+                            <group>
+                                <field name="travel_info" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Response" name="response">
+                            <group string="API Raw Response">
+                                <field name="response_json" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                    <group name="note_group" col="6" class="mt-2 mt-md-0">
+                        <group colspan="4" class="order-1 order-lg-0">
+                        </group>
+                        <group class="col-lg-2 flex-column fon gap-0 gap-2 grid o_inner_group oe_subtotal_footer order-0 order-lg-1" style="font-weight:bold;">
+                            <field name="base_price" readonly="1"/>
+                            <field name="total_tax" readonly="1"/>
+                            <field name="total_amount" readonly="1"/>
+                        </group>
+                    </group>
+<!--                    <group name="note_group" col="6" class="mt-2 mt-md-0">-->
+<!--                        <group colspan="4" class="order-1 order-lg-0">-->
+<!--                            <field  colspan="2" name="note" nolabel="1" placeholder="Terms and conditions..."/>-->
+<!--                        </group>-->
+<!--                        <group class="oe_subtotal_footer d-flex order-0 order-lg-1 flex-column gap-0 gap-sm-3" colspan="2" name="sale_total">-->
+<!--                            <field name="tax_totals" widget="account-tax-totals-field" nolabel="1" readonly="1"/>-->
+<!--                        </group>-->
+<!--                    </group>-->
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_air_ticket" model="ir.actions.act_window">
+        <field name="name">Air Tickets</field>
+        <field name="res_model">air.ticket</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_air_ticket_root"
+              name="Air Tickets"
+              parent="menu_booking_conf_main"
+              action="action_air_ticket"/>
+</odoo>
