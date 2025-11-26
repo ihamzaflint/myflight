@@ -52,6 +52,18 @@ class FlightSearch(models.Model):
     travel_return_date = fields.Date(string="Return")
     flight_stop_ids = fields.Many2many('flight.stop', 'booking_search_flight_stop_rel', 'flight_search_id',
                                        'flight_stop_id')
+    currency_id = fields.Many2one('res.currency', string='Currency', required=True,
+                                  default=lambda self: self._default_currency_id())
+
+    def _default_currency_id(self):
+        return self.env.user.company_id.currency_id
+
+
+    @api.onchange('trip_type')
+    def _onchange_return_date(self):
+        for rec in self:
+            if rec.trip_type and rec.trip_type == 'oneway':
+                rec.travel_return_date = False
 
     @api.constrains('adults', 'children', 'held_infant', 'seated_infant')
     def _check_travel_rules(self):
@@ -138,17 +150,18 @@ class FlightSearch(models.Model):
         api_service = self.env['flight.api.service'].sudo()
         for rec in self:
             flight_conf = self.env.ref('my_flight_integration.booking_conf_flight').sudo()
+            print("flight_conf????????????/", flight_conf.line_ids)
             new_results = []
             total_results = 0
             if flight_conf and flight_conf.line_ids:
                 for line in flight_conf.line_ids:
                     end_point = ''
-                    if line.name == 'amadeus':
+                    if line.code == 'amadeus':
                         end_point = '/shopping/flight-offers'
-                    body = api_service._prepare_body(rec, line, service_provider=line.name, end_point=end_point)
+                    body = api_service._prepare_body(rec, line, service_provider=line.code, end_point=end_point)
                     if body:
                         data = api_service.call_api(
-                            api_type=line.name,
+                            api_type=line.code,
                             endpoint=end_point,
                             flight_search_id=rec.id,
                             payload=body,
@@ -157,8 +170,8 @@ class FlightSearch(models.Model):
                         data = data.json()
                         if not data:
                             continue
-                        if line.name == 'amadeus':
-                            found_flights, total_result_count = api_service.response_manager(response=data, api_type=line.name, booking_rec=rec, endpoint=end_point)
+                        if line.code == 'amadeus':
+                            found_flights, total_result_count = api_service.response_manager(response=data, api_type=line.code, booking_rec=rec, endpoint=end_point)
                             new_results = new_results + found_flights
                             total_results = total_results + total_result_count
                 self.flight_search_line_ids.unlink()

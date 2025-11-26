@@ -29,11 +29,11 @@ class FlightSearchLine(models.Model):
             if rec.conf_id and rec.raw_json_data:
                 conf_line = rec.conf_id
                 end_point = ''
-                if conf_line.name == 'amadeus':
+                if conf_line.code == 'amadeus':
                     end_point = '/shopping/flight-offers/pricing'
-                body = api_service._prepare_body(rec.flight_search_id, rec, service_provider=conf_line.name, end_point=end_point)
+                body = api_service._prepare_body(rec.flight_search_id, rec, service_provider=conf_line.code, end_point=end_point)
                 data = api_service.call_api(
-                    api_type=conf_line.name,
+                    api_type=conf_line.code,
                     endpoint=end_point,
                     flight_search_id=rec.flight_search_id.id,
                     payload=body,
@@ -62,7 +62,7 @@ class FlightSearchLine(models.Model):
                     if travelerType == 'SEATED_INFANT':
                         total_seated_infant += 1
                     taxes = traveler.get("price", {}).get("taxes", [])
-                    refundable_taxes = traveler.get("price").get("refundableTaxes", "-")
+                    refundable_taxes = traveler.get("price").get("refundableTaxes", "0.0")
                     if taxes:
                         t_str = ", ".join(
                             f"{tax.get('code', '')} — {tax.get('amount', '')} {traveler.get('price', {}).get('currency', '')}"
@@ -111,12 +111,13 @@ class FlightSearchLine(models.Model):
                         'traveller_type': 'HELD_INFANT',
                     }))
                 wizard_data.update({
-                            'base_price': price.get('base', '-'),
-                            'total_price': price.get('grandTotal', '-'),
+                            'base_price': float(price.get('base', '0.0')),
+                            'total_price': float(price.get('grandTotal', '0.0')),
                             'currency': price.get('currency', '-'),
+                            'currency_id': rec.currency_id.id,
                             'fare_type': ", ".join(priced_offer.get("pricingOptions", {}).get("fareType", [])),
                             'validating_airline': ", ".join(priced_offer.get("validatingAirlineCodes", [])),
-                            'refundable_taxes': refundable_taxes,
+                            'refundable_taxes': float(refundable_taxes),
                             'tax_summary': "\n".join(tax_texts) or "No tax details found.",
                             'raw_pricing_json': json.dumps(data.get("data", {}).get("flightOffers", [{}])),
                             'total_travels': total_travels,

@@ -7,6 +7,7 @@ class BookingConfLine(models.Model):
 
     name = fields.Char(string="Name")
     url = fields.Char(string="URL")
+    code = fields.Char(string="Code")
     username = fields.Char(string="Username")
     password = fields.Char(string="Password")
     access_token = fields.Char(string="Access Token")
