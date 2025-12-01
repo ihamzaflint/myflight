@@ -150,7 +150,6 @@ class FlightSearch(models.Model):
         api_service = self.env['flight.api.service'].sudo()
         for rec in self:
             flight_conf = self.env.ref('my_flight_integration.booking_conf_flight').sudo()
-            print("flight_conf????????????/", flight_conf.line_ids)
             new_results = []
             total_results = 0
             if flight_conf and flight_conf.line_ids:
@@ -169,11 +168,45 @@ class FlightSearch(models.Model):
                         )
                         data = data.json()
                         if not data:
+                            # reporting into log
+                            api_service.store_log(name='No Data found in response', log_type='error', type='response',
+                                                  url=end_point,
+                                                  code=0, status=None, title=None, detail=None,
+                                                  reference=None, provider_id=line.id, flight_search_id=rec.id,
+                                                  flight_search_line_id=None,
+                                                  request_payload=None, response_payload=None,
+                                                  request_date=fields.Datetime.now()
+                                                  )
                             continue
                         if line.code == 'amadeus':
-                            found_flights, total_result_count = api_service.response_manager(response=data, api_type=line.code, booking_rec=rec, endpoint=end_point)
+                            found_flights, total_result_count = api_service.response_manager(response=data,
+                                                                                             api_type=line.code,
+                                                                                             booking_rec=rec,
+                                                                                             endpoint=end_point)
+                            if not found_flights:
+                                api_service.store_log(name='Flight not found', log_type='warning',
+                                                      type='response',
+                                                      url=end_point,
+                                                      code=0, status=None, title=None, detail=None,
+                                                      reference=None, provider_id=line.id, flight_search_id=rec.id,
+                                                      flight_search_line_id=None,
+                                                      request_payload=body, response_payload=data,
+                                                      request_date=fields.Datetime.now()
+                                                      )
                             new_results = new_results + found_flights
                             total_results = total_results + total_result_count
+                    else:
+                        self.flight_search_line_ids.unlink()
+                        # reporting into log
+                        api_service.store_log(name='Body Not Found For request', log_type='error', type='request',
+                                              url=end_point,
+                                              code=0, status=None, title=None, detail=None,
+                                              reference=None, provider_id=line.id, flight_search_id=rec.id,
+                                              flight_search_line_id=None,
+                                              request_payload=None, response_payload=None,
+                                              request_date=fields.Datetime.now()
+                                              )
+
                 self.flight_search_line_ids.unlink()
                 if new_results:
                     for vals in new_results:

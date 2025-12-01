@@ -130,7 +130,6 @@ class FlightPricingWizard(models.TransientModel):
                             'name': self.env['ir.sequence'].next_by_code('air.ticket'),
                             'flight_search_id': flight_search_id.id,
                             'provider_id': config_line_id.id,
-
                             'response_json': json.dumps(json_response),
                         }
 

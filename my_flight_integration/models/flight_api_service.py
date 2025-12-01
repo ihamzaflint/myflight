@@ -252,7 +252,7 @@ class FlightApiService(models.AbstractModel):
                 offers = response.get("data", [])
                 if not offers:
                     booking_id.state = 'not_found'
-                    raise ValidationError("No Data Found!")
+                    return [], 0
 
                 for offer in offers:
                     itineraries = offer.get("itineraries", [])

@@ -32,6 +32,16 @@ class FlightSearchLine(models.Model):
                 if conf_line.code == 'amadeus':
                     end_point = '/shopping/flight-offers/pricing'
                 body = api_service._prepare_body(rec.flight_search_id, rec, service_provider=conf_line.code, end_point=end_point)
+                if not body:
+                    api_service.store_log(name='Body Not Found For Price Request', log_type='error', type='request',
+                                          url=end_point,
+                                          code=0, status=None, title=None, detail=None,
+                                          reference=None, provider_id=conf_line.id, flight_search_id=rec.flight_search_id.id,
+                                          flight_search_line_id=rec.id,
+                                          request_payload=None, response_payload=None,
+                                          request_date=fields.Datetime.now()
+                                          )
+                    continue
                 data = api_service.call_api(
                     api_type=conf_line.code,
                     endpoint=end_point,
@@ -129,6 +139,19 @@ class FlightSearchLine(models.Model):
                             'flight_search_line_id': rec.id
                         })
                 wizard = self.env['flight.pricing.wizard'].create(wizard_data)
+
+        if not wizard:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'type': 'danger',
+                    'title': 'Something went wrong',
+                    'message': 'please check log something is missing while requesting the pricing.',
+                    'next': {'type': 'ir.actions.act_window_close'},
+                },
+            }
+
         return {
             "type": "ir.actions.act_window",
             "name": "Flight Price Details",
