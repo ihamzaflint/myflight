@@ -1,8 +1,47 @@
-<odoo>
+<odoo noupdate="0">
     <record id="seq_air_ticket" model="ir.sequence">
         <field name="name">Air Ticket</field>
         <field name="code">air.ticket</field>
         <field name="prefix">AIR</field>
         <field name="padding">10</field>
     </record>
+
+
+    <record id="hotel_room_client_seq" model="ir.sequence">
+        <field name="name">Hotel Client Ref</field>
+        <field name="code">hotel.client.seq</field>
+        <field name="prefix">HCR-%(year)s-AW2D-</field>
+        <field name="padding">7</field>
+    </record>
+
+
+    <record id="hotel_room_booking_seq" model="ir.sequence">
+        <field name="name">Hotel Booking Ref</field>
+        <field name="code">hotel.booking.seq</field>
+        <field name="prefix">HBR-%(year)s-sf8E-</field>
+        <field name="padding">7</field>
+    </record>
+
+
+
+    <record id="seq_hotel_client_ref" model="ir.sequence">
+        <field name="name">Hotel Client Ref</field>
+        <field name="code">hotel.client.ref2</field>
+        <field name="prefix">MF</field>
+        <field name="padding">6</field>
+        <field name="number_increment">1</field>
+    </record>
+
+
+    <record id="seq_hotel_booking_ref" model="ir.sequence">
+        <field name="name">Hotel Booking Ref</field>
+        <field name="code">hotel.booking.ref2</field>
+        <field name="prefix">MS-T</field>
+        <field name="padding">6</field>
+        <field name="number_increment">1</field>
+    </record>
+
+
+
+
 </odoo>

@@ -20,15 +20,22 @@ class HotelRoomSearch(models.Model):
         ('searched', 'Searched'),
         ('result_found', 'Result Found'),
         ('not_found', 'Result Not Found'),
+        ('confirmed', 'Confirmed'),
     ], string="Status", default='draft')
 
     check_in = fields.Date(string="Check In")
     check_out = fields.Date(string="Check Out")
     country_id = fields.Many2one('res.country', string="Country")
     city_id = fields.Many2one('res.country.city', string="City", domain="[('country_id', '=', country_id)]")
-    hotel_ids = fields.Many2many('hotel.booking.line', 'booking_search_hotel_line_rel', 'booking_search_id', 'hotel_id', string="Hotels", domain="[('country_id', '=', country_id), ('city_id', '=', city_id)]")
+    hotel_line_ids = fields.Many2many('hotel.booking.line', 'booking_search_hotel_line_rel', 'booking_search_id', 'hotel_id', string="Hotels", domain="[('country_id', '=', country_id), ('city_id', '=', city_id)]")
+    guest_nationality_id = fields.Many2one('res.country', string="Guest Nationality", default=lambda self: self.env.company.country_id.id)
 
     line_ids = fields.One2many('hotel.room.search.line', 'hotel_booking_id')
+    variant_line_ids = fields.One2many(
+        "hotel.room.search.line",
+        "parent_id",
+        string="Room Variants"
+    )
 
     # Traveller data
     traveller_line_ids = fields.One2many(
@@ -37,9 +44,9 @@ class HotelRoomSearch(models.Model):
         string="Travellers"
     )
 
-    total_rooms = fields.Integer(compute="_compute_totals", store=True)
-    total_adults = fields.Integer(compute="_compute_totals", store=True)
-    total_children = fields.Integer(compute="_compute_totals", store=True)
+    total_rooms = fields.Integer(compute="_compute_totals")
+    total_adults = fields.Integer(compute="_compute_totals")
+    total_children = fields.Integer(compute="_compute_totals")
 
     @api.depends('traveller_line_ids')
     def _compute_totals(self):
@@ -66,11 +73,11 @@ class HotelRoomSearch(models.Model):
         if not self.city_id:
             raise ValidationError("Please select a city.")
 
-        provider = "smart booking"
+        provider = "GenX"
         hotel_lines = []
 
-        if provider in ["smart booking", "GenX"]:
-            hotel_codes = ",".join(self.hotel_ids.mapped("hotel_code"))
+        if provider in ["GenX"]:
+            hotel_codes = ",".join(self.hotel_line_ids.mapped("code"))
 
             pax_rooms = []
 
@@ -81,7 +88,6 @@ class HotelRoomSearch(models.Model):
                     "ChildrenAges": [int(x) for x in room.children_ages.split(",")] if room.children else []
                 })
 
-
             try:
                 data = self.call_hotel_api(
                     provider,
@@ -89,8 +95,8 @@ class HotelRoomSearch(models.Model):
                     CheckIn=self.check_in.strftime("%Y-%m-%d") if isinstance(self.check_in, date) else self.check_in,
                     CheckOut=self.check_out.strftime("%Y-%m-%d") if isinstance(self.check_out, date) else self.check_out,
                     HotelCodes=hotel_codes,
-                    CityCode=self.city_id.code,
-                    PaxRooms=pax_rooms
+                    GuestNationality=self.guest_nationality_id.code,
+                    PaxRooms=pax_rooms,
                 )
             except Exception as e:
                 raise ValidationError(f"Error fetching hotel details: {e}")
@@ -107,6 +113,12 @@ class HotelRoomSearch(models.Model):
 
             # Create hotel lines
             for hotel in hotel_result:
+
+                room_transfer = {
+                    'false' : "Room Transfer Not Available",
+                    'true' : "Room Transfer Available"
+                }
+
                 hotel_code = hotel.get("HotelCode")
                 rooms = hotel.get("Rooms", {})
                 if not rooms:
@@ -117,13 +129,38 @@ class HotelRoomSearch(models.Model):
                     rooms = [rooms]
 
                 for room in rooms:
+                    img = hotel.get("FrontImage")
+                    html_images = ""
+                    if img:
+                        html_images = f'<img src="{img}" style="width:200px;height:150px;border-radius:6px;"/>'
+
+
+                    currency_id = self.env['res.currency'].search([('name', '=', hotel.get("Currency"))])
+
+                    hotel_id = self.env["hotel.booking.line"].search([('code', '=', hotel_code)])
+
                     vals = {
-                        'name': room.get("Name") or hotel_code,
-                        'price': room.get("TotalFare"),
-                        'raw_json_data': room,
-                        'hotel_booking_id': self.id,
-                        'booking_code': room.get("BookingCode"),
+                        'hotel_name': hotel.get("HotelName"),
+                        'hotel_id': hotel_id.id,
+                        'name': room.get("Name"),
+                        'price': float(room.get("TotalFare") or 0),
+                        'currency_id': currency_id.id,
                         'meal_type': room.get("MealType"),
+                        'booking_code': room.get("BookingCode"),
+                        'hotel_booking_id': self.id,
+
+                        # details
+                        'address': hotel.get("Address"),
+                        'rating': hotel.get("StarRating"),
+                        'description': hotel.get("HotelDesc"),
+                        'location': hotel.get("Location"),
+                        'room_transfer': room_transfer.get(room.get("WithTransfers")),
+                        'included' : room.get("Inclusion"),
+                        'refundable': True if room.get("IsRefundable").lower() == 'true' else False,
+
+                        # html
+                        'image': html_images,
+                        'raw_json_data': json.dumps(room),
                     }
                     hotel_lines.append(vals)
 
@@ -153,26 +190,35 @@ class HotelRoomSearch(models.Model):
             "res_model": "hotel.room.search",
             "view_mode": "form",
             "res_id": self.id,
-            # "domain": [("hotel_room_search_id", "=", self.id)],
-            # "context": {"default_hotel_room_search_id": self.id},
             "target": "new",
             "view_id": self.env.ref("my_flight_integration.view_hotel_room_search_traveller_add_room_form").id
         }
 
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        # Add default traveller line only if not already added
+        if "traveller_line_ids" in fields_list:
+            traveller_id = {
+                "adults": 1,
+                "children": 0,
+                "children_ages": "",
+            }
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super(HotelRoomSearch, self).create(vals_list)
-        for rec in records:
-            if not rec.traveller_line_ids:
-                rec.write({
-                    "traveller_line_ids": [(0, 0, {
-                        "adults": 1,
-                        "children": 0,
-                        "children_ages": ""
-                    })]
-                })
-        return records
+            res["traveller_line_ids"] = [(0, 0, traveller_id)]
+
+        return res
+
+    def action_return_prebook(self):
+        wizard_id = self.env.context.get("active_wizard_id")
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "hotel.room.wizard",
+            "view_mode": "form",
+            "res_id": wizard_id,
+            "target": "new",
+        }
+
 
 
 
@@ -181,27 +227,15 @@ class HotelRoomTravellerLine(models.Model):
     _description = "Traveller Details Per Room"
 
     hotel_room_search_id = fields.Many2one("hotel.room.search", ondelete="cascade")
-    # partner_id = fields.Many2one("res.partner", string="Traveller", ondelete="restrict")
-    #
-    # title = fields.Selection([
-    #     ('mr', 'Mr'),
-    #     ('mrs', 'Mrs'),
-    #     ('ms', 'Ms'),
-    #     ('miss', 'Miss')
-    # ], string="Title")
-    #
-    # first_name = fields.Char("First Name")
-    # last_name = fields.Char("Last Name")
-    #
-    # traveller_type = fields.Selection([
-    #     ('adult', 'Adult'),
-    #     ('child', 'Child')
-    # ], string="Type", default="adult")
 
     adults = fields.Integer("Adults", default=1)
-    children = fields.Integer("Children", default=0)
+    children = fields.Integer("Children")
     children_ages = fields.Char("Children Ages", help="Enter ages between 1 and 12. "
              "For multiple ages, use comma-separated values. Example: 5,8,17")
+
+
+    email = fields.Char("Lead Person Email")
+    phone = fields.Char("Lead Person Phone")
 
 
     hotel_room_guest_detail_line_ids = fields.One2many("hotel.guest.detail.line", "room_traveller_line_id", "Guest Details")
@@ -252,6 +286,35 @@ class HotelRoomTravellerLine(models.Model):
                 )
 
 
+    @api.constrains("hotel_room_guest_detail_line_ids", "adults", "children")
+    def _check_guest_counts(self):
+        for rec in self:
+
+            if not rec.hotel_room_guest_detail_line_ids:
+                return
+
+            guest_lines = rec.hotel_room_guest_detail_line_ids
+
+            # Count adults & children from guest detail lines
+            adult_count = sum(1 for g in guest_lines if g.traveller_type == "adult")
+            child_count = sum(1 for g in guest_lines if g.traveller_type == "child")
+
+            # Validate adult count
+            if adult_count != rec.adults:
+                raise ValidationError(
+                    f"Adult count mismatch! You selected {rec.adults} adults "
+                    f"but entered {adult_count} adult guest details."
+                )
+
+            # Validate child count
+            if child_count != rec.children:
+                raise ValidationError(
+                    f"Child count mismatch! You selected {rec.children} children "
+                    f"but entered {child_count} child guest details."
+                )
+
+
+
 class HotelGuestDetailsLine(models.Model):
     _name = "hotel.guest.detail.line"
     _description = "Hotel Room Guest Details"
@@ -260,18 +323,52 @@ class HotelGuestDetailsLine(models.Model):
     partner_id = fields.Many2one("res.partner", string="Guest", ondelete="restrict")
 
     title = fields.Selection([
-        ('mr', 'Mr'),
-        ('mrs', 'Mrs'),
-        ('ms', 'Ms'),
-        ('miss', 'Miss')
+        ('Mr', 'Mr'),
+        ('Mrs', 'Mrs'),
+        ('Ms', 'Ms'),
     ], string="Title")
 
-    first_name = fields.Char("First Name")
-    last_name = fields.Char("Last Name")
+    first_name = fields.Char("First Name", compute="_compute_fname_lname")
+    last_name = fields.Char("Last Name", compute="_compute_fname_lname")
+
+    dob = fields.Date("Date of Birth")
 
     traveller_type = fields.Selection([
         ('adult', 'Adult'),
         ('child', 'Child')
-    ], string="Type", default="adult")
+    ], string="Type", default="adult", compute="_compute_traveller_type")
 
     room_traveller_line_id = fields.Many2one('hotel.room.traveller.line')
+
+
+    @api.depends('partner_id')
+    def _compute_fname_lname(self):
+        for rec in self:
+            if rec.partner_id:
+                full_name = rec.partner_id.name or ""
+                parts = full_name.split(" ", 1)
+
+                rec.first_name = parts[0]
+                rec.last_name = parts[1] if len(parts) > 1 else False
+            else:
+                rec.first_name = False
+                rec.last_name = False
+
+
+    @api.depends('dob')
+    def _compute_traveller_type(self):
+        today = date.today()
+
+        for rec in self:
+            if rec.dob:
+                # Calculate age
+                age = today.year - rec.dob.year - ((today.month, today.day) < (rec.dob.month, rec.dob.day))
+
+                # Set traveller type
+                if age <= 12:
+                    rec.traveller_type = 'child'
+                else:
+                    rec.traveller_type = 'adult'
+            else:
+                # No DOB → default to adult
+                rec.traveller_type = 'adult'

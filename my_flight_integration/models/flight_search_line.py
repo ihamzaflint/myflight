@@ -11,7 +11,7 @@ class FlightSearchLine(models.Model):
     currency_id = fields.Many2one(
         'res.currency',
         string="Currency",
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: self.env.company.currency_id.id, context={'active_test': False}
     )
     price = fields.Monetary(currency_field='currency_id')
     location = fields.Char()

@@ -13,7 +13,6 @@
         'views/bookng_conf.xml',
         'views/flight_search.xml',
         'views/iata_code.xml',
-        # 'views/iata_code.xml',
         'views/flight_api_log.xml',
         'views/flight_air_ticket.xml',
 

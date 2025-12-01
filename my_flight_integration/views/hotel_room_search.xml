@@ -8,7 +8,7 @@
         <field name="arch" type="xml">
             <form string="Add Rooms">
                 <notebook>
-                    <page name="traveller_line_ids" string="Add Travellers">
+                    <page name="traveller_line_ids" string="Room Details">
                         <field name="traveller_line_ids">
                             <list>
                                 <field name="adults"/>
@@ -38,7 +38,7 @@
         <field name="arch" type="xml">
             <form string="Add Rooms">
                 <notebook>
-                    <page name="traveller_line_ids" string="Add Travellers">
+                    <page name="traveller_line_ids" string="Room Details">
                         <field name="traveller_line_ids">
                             <list>
                                 <field name="adults"/>
@@ -47,10 +47,19 @@
                             </list>
 
                             <form>
+
                                 <group>
-                                    <field name="adults" readonly="1"/>
-                                    <field name="children" readonly="1"/>
-                                    <field name="children_ages" readonly="children == 0" placeholder="Age1, Age2......."/>
+
+                                    <group>
+                                        <field name="adults" readonly="1"/>
+                                        <field name="children" readonly="1"/>
+                                        <field name="children_ages" readonly="children == 0" placeholder="Age1, Age2......."/>
+                                    </group>
+
+                                    <group>
+                                        <field name="email" required="1"/>
+                                        <field name="phone" required="1"/>
+                                    </group>
                                 </group>
 
                                 <notebook>
@@ -67,13 +76,14 @@
                                             <form>
                                                 <group>
                                                     <group>
-                                                        <field name="title"/>
-                                                        <field name="partner_id"/>
+                                                        <field name="title" required="1"/>
+                                                        <field name="partner_id" required="1"/>
+                                                        <field name="first_name"/>
+                                                        <field name="last_name"/>
                                                     </group>
 
                                                     <group>
-                                                        <field name="first_name"/>
-                                                        <field name="last_name"/>
+                                                        <field name="dob" required="1"/>
                                                         <field name="traveller_type"/>
                                                     </group>
                                                 </group>
@@ -85,34 +95,95 @@
                         </field>
                     </page>
                 </notebook>
+                <footer>
+                    <button string="Save &amp; Return"
+                            type="object"
+                            name="action_return_prebook"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+
+        </field>
+    </record>
+
+
+
+<!--    View to show detailed list of rooms-->
+    <record id="view_hotel_room_more_options" model="ir.ui.view">
+        <field name="name">hotel.room.search.more.options</field>
+        <field name="model">hotel.room.search</field>
+        <field name="arch" type="xml">
+            <form string="More Room Options" version="7.0">
+                <sheet>
+                    <notebook>
+                        <page name="variant_line_ids" string="Available Room Variants">
+                            <field name="variant_line_ids" readonly="1">
+                                <list string="Room Variants">
+                                    <field name="name"/>
+                                    <field name="meal_type"/>
+                                    <field name="price"/>
+                                    <field name="included" column_invisible="['|', ('included', '=', False), ('included', '=', '')]"/>
+                                    <field name="refundable" column_invisible="['|', ('refundable', '=', False), ('refundable', '=', '')]"/>
+                                    <field name="room_transfer" column_invisible="['|', ('room_transfer', '=', False), ('room_transfer', '=', '')]"/>
+                                    <field name="booking_code" column_invisible="1"/>
+
+                                    <button name="action_select_room" string="Select" type="object"
+                                                    class="btn-primary"/>
+                                </list>
+
+                                <form string="Room Variant Details">
+                                    <sheet>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="meal_type"/>
+                                            <field name="price"/>
+                                            <field name="included" invisible="included == False"/>
+                                            <field name="refundable" invisible="refundable == False"/>
+                                            <field name="room_transfer" invisible="room_transfer == False"/>
+                                            <field name="booking_code" invisible="1"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+
+                </sheet>
             </form>
         </field>
     </record>
 
 
+<!--Main room search view-->
     <record id="view_hotel_room_search_form" model="ir.ui.view">
         <field name="name">hotel.room.search.form</field>
         <field name="model">hotel.room.search</field>
         <field name="arch" type="xml">
             <form string="Hotel Search">
-
+                <header>
+                    <field name="state" widget="badge" invisible="state != 'confirmed'"/>
+                </header>
                 <sheet>
-
                     <!-- 🔹 Search Filters Section -->
                     <group string="Search Filters" col="2">
 
                         <group>
-                            <field name="check_in" required="1"/>
-                            <field name="check_out" required="1"/>
+                            <field name="check_in" required="1" readonly="state == 'confirmed'"/>
+                            <field name="check_out" required="1" readonly="state == 'confirmed'"/>
                             <field name="country_id"
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
-                                   required="1"/>
-                            <field name="city_id" required="1" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
+                                   required="1" readonly="state == 'confirmed'"/>
+                            <field name="city_id" required="1" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}" readonly="state == 'confirmed'"/>
 
                         </group>
 
                         <group>
                             <group>
+                                <field name="guest_nationality_id" readonly="state == 'confirmed'"/>
+                                <field name="traveller_line_ids" readonly="1" invisible="1"/>
                                 <field name="total_adults"/>
                                 <field name="total_children"/>
                                 <field name="total_rooms"/>
@@ -121,7 +192,7 @@
                             <group>
                                 <button name="action_open_travellers"
                                     type="object"
-                                    string="Add Travellers"
+                                    string="Room Details"
                                     class="btn-primary"/>
 
                                 <button type="object"
@@ -134,14 +205,15 @@
                         </group>
 
                         <group>
-                            <field name="hotel_ids"
+                            <field name="hotel_line_ids"
                                    widget="many2many_tags"
                                    required="0"
                                    string="Select Hotels"
-                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
+                                   options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
+                                   readonly="state == 'confirmed'"
+                            />
                         </group>
                     </group>
-
 
                     <!-- 🔹 Only show notebook after search -->
                     <notebook invisible="state in ['draft']">
@@ -155,23 +227,48 @@
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}">
 
                                 <list string="Rooms">
+                                    <field name="hotel_id"/>
                                     <field name="name"/>
                                     <field name="price"/>
+                                    <field name="currency_id" column_invisible="1"/>
                                     <field name="meal_type"/>
+                                    <field name="rating" column_invisible="['|', ('rating', '=', False), ('rating', '=', '')]"/>
+                                    <field name="refundable" column_invisible="['|', ('refundable', '=', False), ('refundable', '=', '')]"/>
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="booking_code" column_invisible="1"/>
                                     <field name="raw_json_data" column_invisible="1"/>
-                                    <button name="action_select_room" string="Select" type="object"
-                                            class="btn-primary"/>
+                                    <button name="action_view_more_rooms"
+                                        string="View More Rooms"
+                                        type="object"
+                                        class="btn-primary"
+                                        context="{'active_hotel_id': hotel_id}"/>
                                 </list>
 
                                 <form string="Room Details">
-                                    <group col="2">
-                                        <field name="name"/>
-                                        <field name="price"/>
-                                        <field name="meal_type"/>
-                                        <field name="currency_id" invisible="1"/>
-                                    </group>
+                                    <sheet>
+                                        <group>
+                                            <field name="hotel_id"/>
+                                            <field name="name"/>
+                                            <field name="price"/>
+                                            <field name="currency_id" invisible="1"/>
+                                            <field name="meal_type"/>
+                                            <field name="rating" invisible="rating == False"/>
+                                            <field name="refundable" invisible="refundable == False"/>
+                                            <field name="included" invisible="included == False"/>
+                                            <field name="room_transfer" invisible="room_transfer == False"/>
+                                            <field name="address" invisible="address == False"/>
+                                            <field name="location" invisible="location == False"/>
+                                        </group>
+
+                                        <group>
+                                            <field name="description" invisible="description == False"/>
+                                        </group>
+
+                                        <group string="Images &amp; Map" invisible="image == False and map_view == False">
+                                            <field name="image" widget="html" invisible="image == False"/>
+                                            <field name="map_view" widget="html" invisible="map_view == False"/>
+                                        </group>
+                                    </sheet>
                                 </form>
 
                             </field>

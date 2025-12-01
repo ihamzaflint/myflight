@@ -19,7 +19,7 @@ class HotelApiService(models.AbstractModel):
         hotel_conf = self.env.ref('my_flight_integration.booking_conf_hotel')
         config = self.env['booking.conf.line'].search([
             ('booking_conf_id', '=', hotel_conf.id),
-            ('name', '=', provider_name),
+            ('code', '=', provider_name),
             ('company_id', '=', self.env.company.id)
         ], limit=1)
 
@@ -39,7 +39,7 @@ class HotelApiService(models.AbstractModel):
 
     def _get_header(self, provider):
         header = {}
-        if provider in ['smart booking', 'GenX']:
+        if provider in ['GenX']:
             header['Content-Type'] = 'application/json'
             header['Accept'] = 'application/json'
 
@@ -52,7 +52,7 @@ class HotelApiService(models.AbstractModel):
         kwargs allow overriding fields dynamically.
         """
         payload_map = {}
-        if provider in ['smart booking', 'GenX']:
+        if provider in ['GenX']:
             payload_map = {
                 "/hotelcodelist" : {
                     "CountryCode" : kwargs.get("CountryCode")
@@ -63,15 +63,15 @@ class HotelApiService(models.AbstractModel):
                     "CheckOut": kwargs.get("CheckOut"),
                     "HotelCodes": kwargs.get("HotelCodes", ""),
                     "CityCode": kwargs.get("CityCode", ""),
-                    "GuestNationality": kwargs.get("nationality", "AE"),
+                    "GuestNationality": kwargs.get("GuestNationality", "AE"),
                     "PreferredCurrencyCode": kwargs.get("currency", "AED"),
                     "PaxRooms": kwargs.get("PaxRooms", []),
-                    "IsDetailResponse": kwargs.get("detail", False),
-                    "ResponseTime": kwargs.get("response_time", 30),
+                    "IsDetailResponse": True,
+                    "ResponseTime": kwargs.get("response_time", 23),
                     "Filters": kwargs.get("Filters", {
                         "MealType": "All",
                         "Refundable": "false",
-                        "NoOfRooms": 0
+                        "NoOfRooms": 2000000
                     })
                 },
 
