@@ -1,4 +1,4 @@
-<odoo noupdate="0">
+<odoo noupdate="1">
     <record id="seq_air_ticket" model="ir.sequence">
         <field name="name">Air Ticket</field>
         <field name="code">air.ticket</field>
