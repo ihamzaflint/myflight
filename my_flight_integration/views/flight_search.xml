@@ -6,6 +6,16 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <group>
+                        <group>
+
+                        </group>
+                        <group>
+                            <field name="currency_id" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+
+                    <br/>
                     <label for="origin_id" string="From"/>
                     <field name="origin_id" required="1"
                            options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
@@ -48,7 +58,7 @@
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}">
                                 <list>
                                     <field name="name"/>
-                                    <field name="price"/>
+                                    <field name="price" widget="monetary"/>
                                     <field name="currency_id" column_invisible="1"/>
                                     <field name="location"/>
                                     <field name="stops"/>
@@ -65,7 +75,7 @@
                                             <field name="location"/>
                                         </group>
                                         <group>
-                                            <field name="price"/>
+                                            <field name="price" widget="monetary"/>
                                             <field name="stops"/>
                                             <field name="duration"/>
                                         </group>
@@ -102,9 +112,13 @@
 
 
     </record>
-    <menuitem id="menu_flight_search"
+    <menuitem id="main_menu_flight"
               name="Flight"
               parent="menu_booking"
+              sequence="1"/>
+    <menuitem id="menu_flight_search"
+              name="Search Flight"
+              parent="main_menu_flight"
               action="action_flight_search"
               sequence="1"/>
 
