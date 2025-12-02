@@ -21,7 +21,8 @@
                         <field name="charge_type" readonly="1"/>
                         <field name="cancellation_charge" readonly="1"/>
                         <field name="currency_id" invisible="1"/>
-                        <field name="desc" readonly="1"/>
+                        <field name="desc" readonly="1" invisible="desc == False"/>
+                        <field name="api_status" readonly="1"/>
                         <field name="raw_json_data" readonly="1" invisible="1"/>
                         <button type="object" name="action_add_guest_details" string="Add Guest Details" class="btn-primary" invisible="not_bookable"/>
                         <button type="object" name="action_book_room" string="Book" class="btn-primary" invisible="not_bookable"/>

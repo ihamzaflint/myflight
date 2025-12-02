@@ -38,6 +38,8 @@ class HotelRoomSearchLine(models.Model):
     sanitize=False)
     raw_json_data = fields.Text()
 
+    hotel_detail_id = fields.Many2one("hotel.booking.detail", "Booking Details")
+
 
     # map_iframe = fields.Html("Map", )
 
@@ -61,7 +63,10 @@ class HotelRoomSearchLine(models.Model):
             "type": "ir.actions.act_window",
             "res_model": "hotel.room.wizard",
             "view_mode": "form",
-            "target": "new"
+            "target": "new",
+            "context": {
+                "default_hotel_room_search_line_id": self.id,
+            }
         }
 
 

@@ -1,9 +1,12 @@
 from odoo import models, fields
+from odoo.exceptions import ValidationError
+
 
 class HotelBookingDetail(models.Model):
     _name = "hotel.booking.detail"
     _description = "Hotel Booking Detailed Info"
-    _rec_name = "hotel_search_id"
+    _rec_name = "booking_reference_id"
+
 
     hotel_search_id = fields.Many2one("hotel.room.search")
     state = fields.Selection([
@@ -11,6 +14,7 @@ class HotelBookingDetail(models.Model):
         ('pending', 'Pending'),
         ('failed', 'Failed'),
         ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
     ], string="Status", default='draft')
 
     booking_reference_id = fields.Char()
@@ -20,36 +24,55 @@ class HotelBookingDetail(models.Model):
     confirmation_number = fields.Char()
     invoice_number = fields.Char()
 
-
     check_in = fields.Date()
     check_out = fields.Date()
     booking_date = fields.Date()
     no_of_rooms = fields.Integer()
 
-    # hotel_id = fields.Many2one("hotel.booking.line", "Hotel")
-    hotel_name = fields.Char()
-    hotel_rating = fields.Char()
-    hotel_city = fields.Char()
-    # city_id = fields.Many2one("res.country.city", "City")
+    cancellation_date = fields.Date("From Date")
+    cancellation_type = fields.Char("Charge Type")
+    cancellation_charge = fields.Char("Cancellation Charges")
 
-    # room_id = fields.Many2one("hotel.room.search.line", "Room")
-    room_name = fields.Char()
+    hotel_id = fields.Many2one("hotel.booking.line", "Hotel")
+    hotel_rating = fields.Char()
+    city_id = fields.Many2one("res.country.city", "City")
+
     currency_id = fields.Many2one(
         'res.currency',
         string="Currency",
         default=lambda self: self.env.company.currency_id.id, context={'active_test': False}
     )
-    # room_fare = fields.Float()
-    # room_meal_type = fields.Char()
-    # room_is_refundable = fields.Char()
-    #
-    # cancellation_from_date = fields.Char()
-    # cancellation_charge_type = fields.Char()
-    # cancellation_amount = fields.Char()
-    #
-    # lead_guest_title = fields.Char()
-    # lead_guest_first_name = fields.Char()
-    # lead_guest_last_name = fields.Char()
-    # lead_guest_type = fields.Char()
 
     raw_response = fields.Text()
+    desc = fields.Text("Description")
+
+    guest_line_ids = fields.One2many(
+        "hotel.guest.detail.line",
+        "detail_id",
+        string="Guest Details"
+    )
+
+    room_line_ids = fields.One2many(
+        "hotel.room.search.line",
+        "hotel_detail_id",
+        string="Room Lines"
+    )
+
+
+    def action_cancel_booking(self):
+        self.ensure_one()
+
+        if not self.confirmation_number:
+            raise ValidationError("Confirmation number missing, cannot cancel booking.")
+
+        return {
+            "type": "ir.actions.act_window",
+            "res_model": "hotel.cancel.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_booking_detail_id": self.id,
+                "default_confirmation_number": self.confirmation_number,
+                "default_text": "Are you sure you want to cancel booking?",
+            }
+        }
