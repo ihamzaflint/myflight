@@ -32,7 +32,9 @@ class FlightSearch(models.Model):
     origin_id = fields.Many2one('iata.code')
     destination_id = fields.Many2one('iata.code')
     travel_date = fields.Date(string="Date")
+    multi_city = fields.Boolean(string="Multi City")
     flight_search_line_ids = fields.One2many('flight.search.line', 'flight_search_id')
+    multi_city_ids = fields.One2many('flight.search.multi', 'flight_search_id')
     direct_flight = fields.Boolean(string="Direct Flight?")
     adults = fields.Integer("Adults", default=1)
     children = fields.Integer("Children(0 to 12y)")
@@ -48,6 +50,7 @@ class FlightSearch(models.Model):
     trip_type = fields.Selection([
         ('oneway', 'OneWay'),
         ('return', 'Return'),
+        ('multi_city', 'Multi City'),
     ], string="TripType", default='oneway', required=True)
     travel_return_date = fields.Date(string="Return")
     flight_stop_ids = fields.Many2many('flight.stop', 'booking_search_flight_stop_rel', 'flight_search_id',
@@ -58,12 +61,31 @@ class FlightSearch(models.Model):
     def _default_currency_id(self):
         return self.env.user.company_id.currency_id
 
+    @api.depends('multi_city')
+    def _onchange_multi_city(self):
+        for rec in self:
+            if rec.multi_city:
+                rec.origin_id = False
+                rec.destination_id = False
+                rec.travel_date = False
+            if not rec.multi_city:
+                if rec.multi_city_ids:
+                    rec.multi_city_ids.unlink()
 
     @api.onchange('trip_type')
     def _onchange_return_date(self):
         for rec in self:
             if rec.trip_type and rec.trip_type == 'oneway':
                 rec.travel_return_date = False
+            if rec.trip_type == 'multi_city':
+                rec.multi_city = True
+                rec.origin_id = False
+                rec.destination_id = False
+                rec.travel_date = False
+            else:
+                rec.multi_city = False
+                if rec.multi_city_ids:
+                    rec.multi_city_ids.unlink()
 
     @api.constrains('adults', 'children', 'held_infant', 'seated_infant')
     def _check_travel_rules(self):
@@ -100,6 +122,17 @@ class FlightSearch(models.Model):
         for rec in self:
             if rec.origin_id and rec.destination_id and rec.origin_id.id == rec.destination_id.id:
                 raise ValidationError("Origin and Destination cannot be the same.")
+
+    @api.constrains('multi_city')
+    def _check_multi_city_data(self):
+        for rec in self:
+            if rec.multi_city:
+                if not rec.multi_city_ids:
+                    raise ValidationError("Please add city code and travel date in multiple city option.")
+            if not rec.multi_city:
+                if rec.multi_city_ids:
+                    raise ValidationError("Please remove the city code and travel date from multiple city option.")
+
 
     @api.constrains('travel_date')
     def restrict_travel_date(self):

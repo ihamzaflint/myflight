@@ -3,6 +3,7 @@ my_flight_integration.access_booking_conf,access_booking_conf,my_flight_integrat
 my_flight_integration.access_booking_conf_line,access_booking_conf_line,my_flight_integration.model_booking_conf_line,,1,1,1,1
 
 my_flight_integration.access_flight_search,access_flight_search,my_flight_integration.model_flight_search,,1,1,1,1
+my_flight_integration.access_flight_search_multi,access_flight_search_multi,my_flight_integration.model_flight_search_multi,,1,1,1,1
 my_flight_integration.access_flight_search_line,access_flight_search_line,my_flight_integration.model_flight_search_line,,1,1,1,1
 
 my_flight_integration.access_flight_api_log,access_flight_api_log,my_flight_integration.model_flight_api_log,,1,1,1,1

@@ -2,6 +2,29 @@ from odoo import models, fields, api
 import json
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from odoo.exceptions import ValidationError
+
+
+class FlightSearchMulti(models.Model):
+    _name = "flight.search.multi"
+    _description = "Search Flight With Multiple Cities"
+
+    origin_id = fields.Many2one('iata.code')
+    destination_id = fields.Many2one('iata.code')
+    travel_date = fields.Date(string="Date")
+    flight_search_id = fields.Many2one('flight.search', string="Flight Search")
+
+    @api.constrains('origin_id', 'destination_id')
+    def _check_different_locations_multi_city(self):
+        for rec in self:
+            if rec.origin_id and rec.destination_id and rec.origin_id.id == rec.destination_id.id:
+                raise ValidationError("Origin and Destination cannot be the same.")
+
+    @api.constrains('travel_date')
+    def restrict_travel_date_multi_city(self):
+        for rec in self:
+            if rec.travel_date and rec.travel_date < date.today():
+                raise ValidationError("Date is a past date.")
 
 class FlightSearchLine(models.Model):
     _name = "flight.search.line"
