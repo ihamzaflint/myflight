@@ -396,24 +396,41 @@ class FlightApiService(models.AbstractModel):
                 # -----------------------------
                 # 2. Build origin-destination segment
                 # -----------------------------
-                origin_destinations = [{
-                    "id": "1",
-                    "originLocationCode": flight_search_id.origin_id.code,
-                    "destinationLocationCode": flight_search_id.destination_id.code,
-                    "departureDateTimeRange": {
-                        "date": str(flight_search_id.travel_date)
-                    }
-                }]
-
-                if flight_search_id.trip_type == 'return' and flight_search_id.travel_return_date:
-                    origin_destinations.append({
-                        "id": "2",
-                        "originLocationCode": flight_search_id.destination_id.code,
-                        "destinationLocationCode": flight_search_id.origin_id.code,
+                origin_destinations = []
+                multiple_origin_destinations = []
+                dest = 1
+                if flight_search_id.trip_type == 'multi_city':
+                    for record in flight_search_id.multi_city_ids:
+                        multiple_origin_destinations.append(
+                            {
+                                "id": dest,
+                                "originLocationCode": record.origin_id.code,
+                                "destinationLocationCode": record.destination_id.code,
+                                "departureDateTimeRange": {
+                                    "date": str(record.travel_date)
+                                }
+                            }
+                        )
+                        dest += 1
+                else:
+                    origin_destinations = [{
+                        "id": "1",
+                        "originLocationCode": flight_search_id.origin_id.code,
+                        "destinationLocationCode": flight_search_id.destination_id.code,
                         "departureDateTimeRange": {
-                            "date": str(flight_search_id.travel_return_date)
+                            "date": str(flight_search_id.travel_date)
                         }
-                    })
+                    }]
+
+                    if flight_search_id.trip_type == 'return' and flight_search_id.travel_return_date:
+                        origin_destinations.append({
+                            "id": "2",
+                            "originLocationCode": flight_search_id.destination_id.code,
+                            "destinationLocationCode": flight_search_id.origin_id.code,
+                            "departureDateTimeRange": {
+                                "date": str(flight_search_id.travel_return_date)
+                            }
+                        })
 
                 # -----------------------------
                 # 3. Build search criteria
@@ -441,7 +458,7 @@ class FlightApiService(models.AbstractModel):
                 # -----------------------------
                 body = {
                     "currencyCode": flight_search_id.currency_id.name or "USD",
-                    "originDestinations": origin_destinations,
+                    "originDestinations":  multiple_origin_destinations if flight_search_id.multi_city_ids else origin_destinations,
                     "travelers": travelers,
                     "sources": ["GDS"],
                     "searchCriteria": search_criteria

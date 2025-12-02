@@ -8,7 +8,7 @@
                 <sheet>
                     <group>
                         <group>
-
+                            <field name="multi_city" invisible="1"/>
                         </group>
                         <group>
                             <field name="currency_id" required="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
@@ -16,16 +16,16 @@
                     </group>
 
                     <br/>
-                    <label for="origin_id" string="From"/>
-                    <field name="origin_id" required="1"
-                           options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                    <label for="destination_id" string="To"/>
-                    <field name="destination_id" required="1"
-                           options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                    <label for="travel_date" string="Date"/>
-                    <field name="travel_date" required="1"/>
-                    <label for="travel_return_date" string="Return" invisible="trip_type == 'oneway'"/>
-                    <field name="travel_return_date" invisible="trip_type == 'oneway'"
+                    <label for="origin_id" string="From" invisible="multi_city"/>
+                    <field name="origin_id" required="not multi_city"
+                           options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="multi_city"/>
+                    <label for="destination_id" string="To" invisible="multi_city"/>
+                    <field name="destination_id" required="not multi_city"
+                           options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="multi_city"/>
+                    <label for="travel_date" string="Date" invisible="multi_city"/>
+                    <field name="travel_date" required="not multi_city" invisible="multi_city"/>
+                    <label for="travel_return_date" string="Return" invisible="trip_type == 'oneway' or multi_city" />
+                    <field name="travel_return_date" invisible="trip_type == 'oneway' or multi_city"
                            required="trip_type == 'return'"/>
                     <button type="object" name="action_search_flight" string="Search" class="btn btn-primary"/>
                     <br/>
@@ -52,6 +52,15 @@
                     <label for="cabin_class"/>
                     <field name="cabin_class" nolabel="1"/>
                     <br/>
+                    <br/>
+                    <label for="multi_city_ids" invisible="not multi_city"/>
+                    <field name="multi_city_ids" invisible="not multi_city" string="Multiple Cities">
+                        <list editable="bottom">
+                            <field name="origin_id" required="flight_search_id.multi_city"/>
+                            <field name="destination_id" required="flight_search_id.multi_city"/>
+                            <field name="travel_date" required="flight_search_id.multi_city"/>
+                        </list>
+                    </field>
                     <notebook invisible="state in ['draft']">
                         <page name="flight_search_result" string="Search Result">
                             <field name="flight_search_line_ids" readonly="1"
