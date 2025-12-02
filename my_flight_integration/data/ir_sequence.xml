@@ -24,22 +24,22 @@
 
 
 
-    <record id="seq_hotel_client_ref" model="ir.sequence">
-        <field name="name">Hotel Client Ref</field>
-        <field name="code">hotel.client.ref2</field>
-        <field name="prefix">MF</field>
-        <field name="padding">6</field>
-        <field name="number_increment">1</field>
-    </record>
+<!--    <record id="seq_hotel_client_ref" model="ir.sequence">-->
+<!--        <field name="name">Hotel Client Ref</field>-->
+<!--        <field name="code">hotel.client.ref2</field>-->
+<!--        <field name="prefix">MF</field>-->
+<!--        <field name="padding">6</field>-->
+<!--        <field name="number_increment">1</field>-->
+<!--    </record>-->
 
 
-    <record id="seq_hotel_booking_ref" model="ir.sequence">
-        <field name="name">Hotel Booking Ref</field>
-        <field name="code">hotel.booking.ref2</field>
-        <field name="prefix">MS-T</field>
-        <field name="padding">6</field>
-        <field name="number_increment">1</field>
-    </record>
+<!--    <record id="seq_hotel_booking_ref" model="ir.sequence">-->
+<!--        <field name="name">Hotel Booking Ref</field>-->
+<!--        <field name="code">hotel.booking.ref2</field>-->
+<!--        <field name="prefix">MS-T</field>-->
+<!--        <field name="padding">6</field>-->
+<!--        <field name="number_increment">1</field>-->
+<!--    </record>-->
 
 
 

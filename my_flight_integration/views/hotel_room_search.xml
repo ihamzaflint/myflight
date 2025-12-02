@@ -57,8 +57,8 @@
                                     </group>
 
                                     <group>
-                                        <field name="email" required="1"/>
-                                        <field name="phone" required="1"/>
+                                        <field name="lead_email" required="1"/>
+                                        <field name="lead_phone" required="1"/>
                                     </group>
                                 </group>
 
@@ -116,7 +116,7 @@
         <field name="name">hotel.room.search.more.options</field>
         <field name="model">hotel.room.search</field>
         <field name="arch" type="xml">
-            <form string="More Room Options" version="7.0">
+            <form string="More Room Options">
                 <sheet>
                     <notebook>
                         <page name="variant_line_ids" string="Available Room Variants">
@@ -125,6 +125,7 @@
                                     <field name="name"/>
                                     <field name="meal_type"/>
                                     <field name="price"/>
+                                    <field name="currency_id" column_invisible="1"/>
                                     <field name="included" column_invisible="['|', ('included', '=', False), ('included', '=', '')]"/>
                                     <field name="refundable" column_invisible="['|', ('refundable', '=', False), ('refundable', '=', '')]"/>
                                     <field name="room_transfer" column_invisible="['|', ('room_transfer', '=', False), ('room_transfer', '=', '')]"/>
@@ -163,42 +164,44 @@
         <field name="model">hotel.room.search</field>
         <field name="arch" type="xml">
             <form string="Hotel Search">
-                <header>
-                    <field name="state" widget="badge" invisible="state != 'confirmed'"/>
-                </header>
                 <sheet>
+
+                    <header>
+                        <field name="state" widget="badge" invisible="state not in  ['confirmed', 'cancelled']"/>
+                    </header>
                     <!-- 🔹 Search Filters Section -->
                     <group string="Search Filters" col="2">
 
                         <group>
-                            <field name="check_in" required="1" readonly="state == 'confirmed'"/>
-                            <field name="check_out" required="1" readonly="state == 'confirmed'"/>
+                            <field name="check_in" required="1" readonly="state in ['confirmed', 'cancelled']"/>
+                            <field name="check_out" required="1" readonly="state in ['confirmed', 'cancelled']"/>
                             <field name="country_id"
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
-                                   required="1" readonly="state == 'confirmed'"/>
-                            <field name="city_id" required="1" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}" readonly="state == 'confirmed'"/>
+                                   required="1" readonly="state in ['confirmed', 'cancelled']"/>
+                            <field name="city_id" required="1" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}" readonly="state in ['confirmed', 'cancelled']"/>
 
                         </group>
 
                         <group>
                             <group>
-                                <field name="guest_nationality_id" readonly="state == 'confirmed'"/>
+                                <field name="guest_nationality_id" readonly="state in ['confirmed', 'cancelled']" options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"/>
                                 <field name="traveller_line_ids" readonly="1" invisible="1"/>
                                 <field name="total_adults"/>
                                 <field name="total_children"/>
                                 <field name="total_rooms"/>
+                                <field name="hotel_detail_id" readonly="1" invisible="hotel_detail_id == False"/>
                             </group>
 
                             <group>
                                 <button name="action_open_travellers"
                                     type="object"
                                     string="Room Details"
-                                    class="btn-primary"/>
+                                    class="btn-primary" invisible="state in ['confirmed', 'cancelled']"/>
 
                                 <button type="object"
                                         name="action_search_hotel_rooms"
                                         string="Search"
-                                        class="btn-primary"/>
+                                        class="btn-primary" invisible="state in ['confirmed', 'cancelled']"/>
                             </group>
 
 
@@ -210,7 +213,7 @@
                                    required="0"
                                    string="Select Hotels"
                                    options="{'no_create': True, 'no_create_edit': True, 'no_open': True}"
-                                   readonly="state == 'confirmed'"
+                                   readonly="state in ['confirmed', 'cancelled']"
                             />
                         </group>
                     </group>
@@ -241,7 +244,7 @@
                                         string="View More Rooms"
                                         type="object"
                                         class="btn-primary"
-                                        context="{'active_hotel_id': hotel_id}"/>
+                                        context="{'active_hotel_id': hotel_id}" invisible="parent.state == 'confirmed'"/>
                                 </list>
 
                                 <form string="Room Details">

@@ -226,6 +226,7 @@ class HotelApiService(models.AbstractModel):
             "prebook": "/Prebook",
             "book": "/HotelBook",
             "booking_detail": "/BookingDetail",
+            "cancel": "/Cancel",
             "hotel_details": "/Hoteldetails",
             "hotel_code_list": "/hotelcodelist",
             "city_list": "/CityList",

@@ -21,6 +21,7 @@ class HotelRoomSearch(models.Model):
         ('result_found', 'Result Found'),
         ('not_found', 'Result Not Found'),
         ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
     ], string="Status", default='draft')
 
     check_in = fields.Date(string="Check In")
@@ -36,6 +37,7 @@ class HotelRoomSearch(models.Model):
         "parent_id",
         string="Room Variants"
     )
+    hotel_detail_id = fields.Many2one("hotel.booking.detail", "Booking Details")
 
     # Traveller data
     traveller_line_ids = fields.One2many(
@@ -47,6 +49,14 @@ class HotelRoomSearch(models.Model):
     total_rooms = fields.Integer(compute="_compute_totals")
     total_adults = fields.Integer(compute="_compute_totals")
     total_children = fields.Integer(compute="_compute_totals")
+
+
+    @api.onchange("country_id")
+    def _onchange_country(self):
+        """When country changes → clear city & hotels"""
+        self.city_id = False
+        self.hotel_line_ids = [(5, 0, 0)]
+
 
     @api.depends('traveller_line_ids')
     def _compute_totals(self):
@@ -194,6 +204,7 @@ class HotelRoomSearch(models.Model):
             "view_id": self.env.ref("my_flight_integration.view_hotel_room_search_traveller_add_room_form").id
         }
 
+
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -209,6 +220,7 @@ class HotelRoomSearch(models.Model):
 
         return res
 
+
     def action_return_prebook(self):
         wizard_id = self.env.context.get("active_wizard_id")
         return {
@@ -218,7 +230,6 @@ class HotelRoomSearch(models.Model):
             "res_id": wizard_id,
             "target": "new",
         }
-
 
 
 
@@ -234,9 +245,8 @@ class HotelRoomTravellerLine(models.Model):
              "For multiple ages, use comma-separated values. Example: 5,8,17")
 
 
-    email = fields.Char("Lead Person Email")
-    phone = fields.Char("Lead Person Phone")
-
+    lead_email = fields.Char("Lead Person Email", compute="compute_lead_email_phone", readonly=False)
+    lead_phone = fields.Char("Lead Person Phone", compute="compute_lead_email_phone", readonly=False)
 
     hotel_room_guest_detail_line_ids = fields.One2many("hotel.guest.detail.line", "room_traveller_line_id", "Guest Details")
 
@@ -313,6 +323,37 @@ class HotelRoomTravellerLine(models.Model):
                     f"but entered {child_count} child guest details."
                 )
 
+    @api.depends('hotel_room_guest_detail_line_ids')
+    def compute_lead_email_phone(self):
+        for rec in self:
+            if rec.lead_email or rec.lead_phone:
+                continue
+
+            # Default values
+            rec.lead_email = ""
+            rec.lead_phone = ""
+
+
+            guests = rec.hotel_room_guest_detail_line_ids
+
+            if not guests:
+                continue
+
+            # Prefer an adult guest as lead
+            lead_guest = guests.filtered(lambda g: g.traveller_type == "adult")[:1]
+
+            # If no adult, pick the first guest
+            if not lead_guest:
+                lead_guest = guests[:1]
+
+            lead_guest = lead_guest[0]
+
+            # Extract from partner
+            if lead_guest.partner_id:
+                rec.lead_email = lead_guest.partner_id.email or ""
+                rec.lead_phone = lead_guest.partner_id.phone or ""
+
+
 
 
 class HotelGuestDetailsLine(models.Model):
@@ -339,6 +380,8 @@ class HotelGuestDetailsLine(models.Model):
     ], string="Type", default="adult", compute="_compute_traveller_type")
 
     room_traveller_line_id = fields.Many2one('hotel.room.traveller.line')
+
+    detail_id = fields.Many2one("hotel.booking.detail", ondelete="cascade")
 
 
     @api.depends('partner_id')

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_hotel_booking_detail_form" model="ir.ui.view">
+        <field name="name">hotel.booking.detail.form</field>
+        <field name="model">hotel.booking.detail</field>
+        <field name="arch" type="xml">
+            <form string="Booking Details">
+                <sheet>
+                    <header>
+                        <field name="state" widget="badge" class="oe_inline"/>
+                    </header>
+
+                    <header>
+                        <button name="action_cancel_booking" string="Cancel Booking"
+                            type="object" class="btn-primary"
+                            invisible="state != 'confirmed'"/>
+                    </header>
+                    <group>
+                        <group string="Booking Info">
+                            <field name="booking_reference_id" readonly="1"/>
+                            <field name="confirmation_number" readonly="1"/>
+                            <field name="invoice_number" readonly="1"/>
+                            <field name="create_date" string="Booking Created Date" readonly="1"/>
+                            <field name="payment_mode" readonly="1"/>
+                            <field name="voucher_status" readonly="1"/>
+                            <field name="hotel_search_id" readonly="1"/>
+                        </group>
+
+                        <group string="Stay Details">
+                            <field name="check_in" readonly="1"/>
+                            <field name="check_out" readonly="1"/>
+                            <field name="booking_date" readonly="1"/>
+                            <field name="no_of_rooms" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Hotel">
+                            <field name="hotel_id" readonly="1"/>
+                            <field name="hotel_rating" readonly="1"/>
+                            <field name="city_id" readonly="1"/>
+                        </group>
+
+                        <group string="Cancellation Policy">
+                            <field name="cancellation_date" readonly="1"/>
+                            <field name="cancellation_type" readonly="1"/>
+                            <field name="cancellation_charge" readonly="1"/>
+                            <field name="desc" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="API Raw Response" invisible="1">
+                        <field name="raw_response" readonly="1"/>
+                    </group>
+
+
+                    <notebook>
+                        <page name="guest_line_ids" string="Guest details">
+                            <field name="guest_line_ids" readonly="1">
+                                <list>
+                                    <field name="title"/>
+                                    <field name="partner_id"/>
+                                    <field name="first_name"/>
+                                    <field name="last_name"/>
+                                    <field name="traveller_type"/>
+                                </list>
+
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="title"/>
+                                            <field name="partner_id"/>
+                                            <field name="first_name"/>
+                                            <field name="last_name"/>
+                                        </group>
+
+                                        <group>
+                                            <field name="dob"/>
+                                            <field name="traveller_type"/>
+                                        </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+
+
+                        <page name="room_line_ids" string="Room Details">
+                            <field name="room_line_ids" readonly="1">
+                                <list string="Rooms">
+                                    <field name="hotel_id"/>
+                                    <field name="name"/>
+                                    <field name="price"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="meal_type"/>
+                                    <field name="refundable"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="booking_code" column_invisible="1"/>
+                                    <field name="raw_json_data" column_invisible="1"/>
+                                </list>
+
+                                <form string="Room Details">
+                                    <sheet>
+                                        <group>
+                                            <field name="hotel_id"/>
+                                            <field name="name"/>
+                                            <field name="price"/>
+                                            <field name="currency_id" invisible="1"/>
+                                            <field name="meal_type"/>
+                                            <field name="rating" invisible="rating == False"/>
+                                            <field name="refundable" invisible="refundable == False"/>
+                                            <field name="included" invisible="included == False"/>
+                                            <field name="room_transfer" invisible="room_transfer == False"/>
+                                            <field name="address" invisible="address == False"/>
+                                            <field name="location" invisible="location == False"/>
+                                        </group>
+
+                                        <group>
+                                            <field name="description" invisible="description == False"/>
+                                        </group>
+
+                                        <group string="Images &amp; Map" invisible="image == False and address == False">
+                                            <field name="image" widget="html" invisible="image == False"/>
+                                            <field name="map_view" widget="html" invisible="address == False"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+
+    <record id="view_hotel_booking_detail_list" model="ir.ui.view">
+        <field name="name">hotel.booking.detail.list</field>
+        <field name="model">hotel.booking.detail</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="booking_reference_id"/>
+                <field name="confirmation_number"/>
+                <field name="hotel_id"/>
+                <field name="city_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="no_of_rooms"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+
+    <record id="action_hotel_booking_detail" model="ir.actions.act_window">
+        <field name="name">Hotel Booking Details</field>
+        <field name="res_model">hotel.booking.detail</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+    <menuitem id="menu_hotel_booking_detail"
+              name="Hotel Booking Details"
+              parent="menu_hotel"
+              action="action_hotel_booking_detail"/>
+
+</odoo>
