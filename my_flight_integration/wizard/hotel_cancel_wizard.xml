@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hotel_cancel_wizard" model="ir.ui.view">
+        <field name="name">hotel.cancel.wizard.form</field>
+        <field name="model">hotel.cancel.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cancel Booking">
+                <sheet>
+                    <field name="confirmation_number" readonly="1" invisible="1"/>
+                    <field name="text" readonly="1" no_label="1"/>
+                </sheet>
+                <footer>
+                    <button string="Confirm Cancel" type="object"
+                            name="action_confirm_cancel"
+                            class="btn-primary"/>
+                    <button string="Close" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

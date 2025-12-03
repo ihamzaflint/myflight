@@ -102,22 +102,24 @@ class ResCountryStateCity(models.Model):
 
     def cron_fetch_all_cities_from_api(self):
         """Scheduled job: fetch cities for all countries in the predefined list"""
-        country_codes = [
-            "AF","AL","DZ","AS","AD","AO","AI","AQ","AG","AR","AM","AW","AU","AT","AZ","BS","BH","BD","BB",
-            "BY","BE","BZ","BJ","BM","BT","BO","BQ","BA","BW","BV","BR","BC","BN","BG","BF","BI","KH","CM",
-            "CA","CV","KY","CF","TD","CL","CN","CX","CC","CO","KM","CG","CD","CK","CR","CT","HR","CU","CY",
-            "CZ","DK","DJ","DM","DO","EO","EC","EG","SV","GQ","ER","EE","ET","EP","FK","FO","FJ","FI","FR",
-            "GF","PF","FT","GA","GM","GE","DE","GH","GI","GR","GL","GD","GP","GU","GT","GN","GW","GY","HT",
-            "HW","HI","HN","HK","HU","IS","IN","ID","IR","IQ","IE","IL","IT","CI","JM","JP","JE","JO","KZ",
-            "KE","KI","KP","KV","KW","KG","LA","LV","LB","LS","LR","LY","LI","LT","LU","MO","MK","MG","MW",
-            "MY","MV","ML","MT","MH","MQ","MR","MU","YT","MX","FM","MD","MC","MN","ME","MS","MA","MZ","MM",
-            "NA","NR","NP","NL","AN","NC","NZ","NI","NE","NG","NU","NF","NK","MP","NO","OM","PK","PW","PS",
-            "PA","PG","PY","PE","PH","PC","PL","PT","PR","QA","RE","RO","RU","RW","SW","KN","LC","SJ","MF",
-            "WS","SM","ST","SA","SN","RS","SC","SL","SG","SK","SI","SB","SO","ZA","KR","ES","LK","VC","SH",
-            "PM","SD","SR","SP","SZ","SE","CH","SY","TW","TJ","TZ","TH","TG","TK","TO","TT","TN","TR","TM",
-            "TC","TV","VI","UG","UA","AE","GB","UK","UY","US","UZ","VU","VE","VN","VG","WF","WR","YE","ZR",
-            "ZM","ZW"
-        ]
+        # country_codes = [
+        #     "AF","AL","DZ","AS","AD","AO","AI","AQ","AG","AR","AM","AW","AU","AT","AZ","BS","BH","BD","BB",
+        #     "BY","BE","BZ","BJ","BM","BT","BO","BQ","BA","BW","BV","BR","BC","BN","BG","BF","BI","KH","CM",
+        #     "CA","CV","KY","CF","TD","CL","CN","CX","CC","CO","KM","CG","CD","CK","CR","CT","HR","CU","CY",
+        #     "CZ","DK","DJ","DM","DO","EO","EC","EG","SV","GQ","ER","EE","ET","EP","FK","FO","FJ","FI","FR",
+        #     "GF","PF","FT","GA","GM","GE","DE","GH","GI","GR","GL","GD","GP","GU","GT","GN","GW","GY","HT",
+        #     "HW","HI","HN","HK","HU","IS","IN","ID","IR","IQ","IE","IL","IT","CI","JM","JP","JE","JO","KZ",
+        #     "KE","KI","KP","KV","KW","KG","LA","LV","LB","LS","LR","LY","LI","LT","LU","MO","MK","MG","MW",
+        #     "MY","MV","ML","MT","MH","MQ","MR","MU","YT","MX","FM","MD","MC","MN","ME","MS","MA","MZ","MM",
+        #     "NA","NR","NP","NL","AN","NC","NZ","NI","NE","NG","NU","NF","NK","MP","NO","OM","PK","PW","PS",
+        #     "PA","PG","PY","PE","PH","PC","PL","PT","PR","QA","RE","RO","RU","RW","SW","KN","LC","SJ","MF",
+        #     "WS","SM","ST","SA","SN","RS","SC","SL","SG","SK","SI","SB","SO","ZA","KR","ES","LK","VC","SH",
+        #     "PM","SD","SR","SP","SZ","SE","CH","SY","TW","TJ","TZ","TH","TG","TK","TO","TT","TN","TR","TM",
+        #     "TC","TV","VI","UG","UA","AE","GB","UK","UY","US","UZ","VU","VE","VN","VG","WF","WR","YE","ZR",
+        #     "ZM","ZW"
+        # ]
+
+        country_codes = COUNTRY_DATA.keys()
 
         for code in country_codes:
             name = COUNTRY_DATA.get(code)
@@ -138,7 +140,7 @@ class ResCountryStateCity(models.Model):
                 _logger.info(f"Created missing country: {code}")
 
             try:
-                data = self.call_hotel_api("smart booking", "city_list", CountryCode=country.code)
+                data = self.call_hotel_api("GenX", "city_list", CountryCode=country.code)
             except Exception as e:
                 _logger.error(f"API error while fetching cities for {country.code}: {e}")
                 continue

@@ -32,7 +32,9 @@ class FlightSearch(models.Model):
     origin_id = fields.Many2one('iata.code')
     destination_id = fields.Many2one('iata.code')
     travel_date = fields.Date(string="Date")
+    multi_city = fields.Boolean(string="Multi City")
     flight_search_line_ids = fields.One2many('flight.search.line', 'flight_search_id')
+    multi_city_ids = fields.One2many('flight.search.multi', 'flight_search_id')
     direct_flight = fields.Boolean(string="Direct Flight?")
     adults = fields.Integer("Adults", default=1)
     children = fields.Integer("Children(0 to 12y)")
@@ -48,10 +50,42 @@ class FlightSearch(models.Model):
     trip_type = fields.Selection([
         ('oneway', 'OneWay'),
         ('return', 'Return'),
+        ('multi_city', 'Multi City'),
     ], string="TripType", default='oneway', required=True)
     travel_return_date = fields.Date(string="Return")
     flight_stop_ids = fields.Many2many('flight.stop', 'booking_search_flight_stop_rel', 'flight_search_id',
                                        'flight_stop_id')
+    currency_id = fields.Many2one('res.currency', string='Currency', required=True,
+                                  default=lambda self: self._default_currency_id())
+
+    def _default_currency_id(self):
+        return self.env.user.company_id.currency_id
+
+    @api.depends('multi_city')
+    def _onchange_multi_city(self):
+        for rec in self:
+            if rec.multi_city:
+                rec.origin_id = False
+                rec.destination_id = False
+                rec.travel_date = False
+            if not rec.multi_city:
+                if rec.multi_city_ids:
+                    rec.multi_city_ids.unlink()
+
+    @api.onchange('trip_type')
+    def _onchange_return_date(self):
+        for rec in self:
+            if rec.trip_type and rec.trip_type == 'oneway':
+                rec.travel_return_date = False
+            if rec.trip_type == 'multi_city':
+                rec.multi_city = True
+                rec.origin_id = False
+                rec.destination_id = False
+                rec.travel_date = False
+            else:
+                rec.multi_city = False
+                if rec.multi_city_ids:
+                    rec.multi_city_ids.unlink()
 
     @api.constrains('adults', 'children', 'held_infant', 'seated_infant')
     def _check_travel_rules(self):
@@ -88,6 +122,17 @@ class FlightSearch(models.Model):
         for rec in self:
             if rec.origin_id and rec.destination_id and rec.origin_id.id == rec.destination_id.id:
                 raise ValidationError("Origin and Destination cannot be the same.")
+
+    @api.constrains('multi_city')
+    def _check_multi_city_data(self):
+        for rec in self:
+            if rec.multi_city:
+                if not rec.multi_city_ids:
+                    raise ValidationError("Please add city code and travel date in multiple city option.")
+            if not rec.multi_city:
+                if rec.multi_city_ids:
+                    raise ValidationError("Please remove the city code and travel date from multiple city option.")
+
 
     @api.constrains('travel_date')
     def restrict_travel_date(self):
@@ -143,12 +188,12 @@ class FlightSearch(models.Model):
             if flight_conf and flight_conf.line_ids:
                 for line in flight_conf.line_ids:
                     end_point = ''
-                    if line.name == 'amadeus':
+                    if line.code == 'amadeus':
                         end_point = '/shopping/flight-offers'
-                    body = api_service._prepare_body(rec, line, service_provider=line.name, end_point=end_point)
+                    body = api_service._prepare_body(rec, line, service_provider=line.code, end_point=end_point)
                     if body:
                         data = api_service.call_api(
-                            api_type=line.name,
+                            api_type=line.code,
                             endpoint=end_point,
                             flight_search_id=rec.id,
                             payload=body,
@@ -156,11 +201,45 @@ class FlightSearch(models.Model):
                         )
                         data = data.json()
                         if not data:
+                            # reporting into log
+                            api_service.store_log(name='No Data found in response', log_type='error', type='response',
+                                                  url=end_point,
+                                                  code=0, status=None, title=None, detail=None,
+                                                  reference=None, provider_id=line.id, flight_search_id=rec.id,
+                                                  flight_search_line_id=None,
+                                                  request_payload=None, response_payload=None,
+                                                  request_date=fields.Datetime.now()
+                                                  )
                             continue
-                        if line.name == 'amadeus':
-                            found_flights, total_result_count = api_service.response_manager(response=data, api_type=line.name, booking_rec=rec, endpoint=end_point)
+                        if line.code == 'amadeus':
+                            found_flights, total_result_count = api_service.response_manager(response=data,
+                                                                                             api_type=line.code,
+                                                                                             booking_rec=rec,
+                                                                                             endpoint=end_point)
+                            if not found_flights:
+                                api_service.store_log(name='Flight not found', log_type='warning',
+                                                      type='response',
+                                                      url=end_point,
+                                                      code=0, status=None, title=None, detail=None,
+                                                      reference=None, provider_id=line.id, flight_search_id=rec.id,
+                                                      flight_search_line_id=None,
+                                                      request_payload=body, response_payload=data,
+                                                      request_date=fields.Datetime.now()
+                                                      )
                             new_results = new_results + found_flights
                             total_results = total_results + total_result_count
+                    else:
+                        self.flight_search_line_ids.unlink()
+                        # reporting into log
+                        api_service.store_log(name='Body Not Found For request', log_type='error', type='request',
+                                              url=end_point,
+                                              code=0, status=None, title=None, detail=None,
+                                              reference=None, provider_id=line.id, flight_search_id=rec.id,
+                                              flight_search_line_id=None,
+                                              request_payload=None, response_payload=None,
+                                              request_date=fields.Datetime.now()
+                                              )
+
                 self.flight_search_line_ids.unlink()
                 if new_results:
                     for vals in new_results:

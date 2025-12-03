@@ -12,13 +12,20 @@ class FlightPricingWizard(models.TransientModel):
     _description = "Flight Pricing Wizard"
 
     flight_search_line_id = fields.Many2one("flight.search.line", string="Flight Offer Line", readonly=True)
-    base_price = fields.Char(string="Base Price", readonly=True)
-    total_price = fields.Char(string="Total Price", readonly=True)
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Currency",
+        default=lambda self: self.env.company.currency_id.id,
+    )
+
+    base_price = fields.Monetary(string="Base Price", currency_field='currency_id', readonly=True)
+    total_price = fields.Monetary(string="Total Price", currency_field='currency_id', readonly=True)
     currency = fields.Char(string="Currency", readonly=True)
+
     fare_type = fields.Char(string="Fare Type", readonly=True)
     validating_airline = fields.Char(string="Validating Airline", readonly=True)
     raw_pricing_json = fields.Text(string="Raw Pricing Data", readonly=True)
-    refundable_taxes = fields.Char(string="Refundable Taxes", readonly=True)
+    refundable_taxes = fields.Monetary(string="Refundable Taxes",currency_field='currency_id', readonly=True)
     tax_summary = fields.Text(string="Tax Details", readonly=True)
     total_travels = fields.Integer(string="Total Travellers")
     total_adults = fields.Integer(string="Total Adults")
@@ -65,7 +72,7 @@ class FlightPricingWizard(models.TransientModel):
             flight_search_id = rec.flight_search_line_id.flight_search_id
             flight_search_line_id = rec.flight_search_line_id
             config_line_id = rec.flight_search_line_id.conf_id
-            if config_line_id.name == 'amadeus':
+            if config_line_id.code == 'amadeus':
                 if rec.total_travels and rec.travellers_ids:
                     line_for_adults = rec.travellers_ids.filtered(lambda t: t.traveller_type == 'ADULT')
                     line_for_childs = rec.travellers_ids.filtered(lambda t: t.traveller_type == 'CHILD')
@@ -103,17 +110,18 @@ class FlightPricingWizard(models.TransientModel):
                             "You should add total (%s) held infant in this flight ticket!!" % rec.total_held_infant)
 
                     end_point = '/booking/flight-orders'
-                    body = api_service._prepare_body(flight_search_id, rec, service_provider=config_line_id.name,
+                    body = api_service._prepare_body(flight_search_id, rec, service_provider=config_line_id.code,
                                                     end_point=end_point)
                     if body:
                         data = api_service.call_api(
-                            api_type=config_line_id.name,
+                            api_type=config_line_id.code,
                             endpoint=end_point,
                             flight_search_id=flight_search_id.id,
                             payload=body,
                             version='v1'
                         )
-
+                        if data.status_code not in (200, 201):
+                            raise ValidationError(data.text)
                         # data = {"data": {"type": "flight-order", "id": "eJzTd9e3cHYNMw4EAAqdAkA", "queuingOfficeId": "NCE4D31SB", "associatedRecords": [{"reference": "8CEV3Q", "creationDate": "2025-11-24T11:03:00.000", "originSystemCode": "GDS", "flightOfferId": "3"}, {"reference": "8CEV3Q", "creationDate": "2025-11-24T11:03:00.000", "originSystemCode": "UL", "flightOfferId": "3"}], "flightOffers": [{"type": "flight-offer", "id": "3", "source": "GDS", "nonHomogeneous": False, "lastTicketingDate": "2025-11-28", "itineraries": [{"segments": [{"departure": {"iataCode": "BOM", "terminal": "2", "at": "2025-11-28T20:45:00"}, "arrival": {"iataCode": "CMB", "at": "2025-11-28T23:15:00"}, "carrierCode": "UL", "number": "144", "aircraft": {"code": "320"}, "duration": "PT2H30M", "id": "99", "numberOfStops": 0, "co2Emissions": [{"weight": 122, "weightUnit": "KG", "cabin": "ECONOMY"}]}, {"departure": {"iataCode": "CMB", "at": "2025-11-29T18:40:00"}, "arrival": {"iataCode": "DXB", "terminal": "1", "at": "2025-11-29T21:50:00"}, "carrierCode": "UL", "number": "225", "aircraft": {"code": "332"}, "duration": "PT4H40M", "id": "100", "numberOfStops": 0, "co2Emissions": [{"weight": 194, "weightUnit": "KG", "cabin": "ECONOMY"}]}]}], "price": {"currency": "USD", "total": "140.36", "base": "36.00", "fees": [{"amount": "0.00", "type": "TICKETING"}, {"amount": "0.00", "type": "SUPPLIER"}, {"amount": "0.00", "type": "FORM_OF_PAYMENT"}], "grandTotal": "140.36", "billingCurrency": "USD"}, "pricingOptions": {"fareType": ["PUBLISHED"], "includedCheckedBagsOnly": True}, "validatingAirlineCodes": ["UL"], "travelerPricings": [{"travelerId": "1", "fareOption": "STANDARD", "travelerType": "ADULT", "price": {"currency": "USD", "total": "140.36", "base": "36.00", "taxes": [{"amount": "8.20", "code": "IN"}, {"amount": "5.60", "code": "K3"}, {"amount": "14.16", "code": "P2"}, {"amount": "75.00", "code": "YQ"}, {"amount": "1.40", "code": "ZR"}], "refundableTaxes": "106.36"}, "fareDetailsBySegment": [{"segmentId": "99", "cabin": "ECONOMY", "fareBasis": "SOWIZ", "class": "S", "includedCheckedBags": {"weight": 30, "weightUnit": "KG"}}, {"segmentId": "100", "cabin": "ECONOMY", "fareBasis": "SOWIZ", "class": "S", "includedCheckedBags": {"weight": 30, "weightUnit": "KG"}}]}]}], "travelers": [{"id": "1", "dateOfBirth": "2007-11-24", "gender": "MALE", "name": {"firstName": "Rahul", "lastName": "Lalani"}, "documents": [{"number": "00000", "issuanceDate": "2024-09-17", "expiryDate": "2026-06-11", "issuanceCountry": "IN", "issuanceLocation": "JAMNAGAR", "birthPlace": "JAMNAGAR", "documentType": "VISA", "validityCountry": "IN"}], "contact": {"purpose": "STANDARD", "phones": [{"deviceType": "LANDLINE", "countryCallingCode": "91", "number": "159951159"}, {"deviceType": "MOBILE", "countryCallingCode": "91", "number": "9898992290"}], "emailAddress": "lalani@gmail.com"}}], "remarks": {"general": [{"subType": "GENERAL_MISCELLANEOUS", "text": "ONLINE BOOKING FROM INCREIBLE VIAJES"}]}, "ticketingAgreement": {"option": "DELAY_TO_CANCEL", "delay": "6D"}, "automatedProcess": [{"code": "IMMEDIATE", "queue": {"number": "0", "category": "0"}, "officeId": "NCE4D31SB"}], "contacts": [{"addresseeName": {"firstName": "Jethyo jado"}, "address": {"lines": ["AA", "BB"], "postalCode": "361001", "countryCode": "IN", "cityName": "JAMNAGAR"}, "purpose": "INVOICE", "companyName": "JETHULAL"}]}, "dictionaries": {"locations": {"BOM": {"cityCode": "BOM", "countryCode": "IN"}, "CMB": {"cityCode": "CMB", "countryCode": "LK"}, "DXB": {"cityCode": "DXB", "countryCode": "AE"}}}}
                         json_response = data.json()
                         # json_response = data
@@ -122,12 +130,12 @@ class FlightPricingWizard(models.TransientModel):
                             'name': self.env['ir.sequence'].next_by_code('air.ticket'),
                             'flight_search_id': flight_search_id.id,
                             'provider_id': config_line_id.id,
-
                             'response_json': json.dumps(json_response),
                         }
 
                         try:
                             data_block = json_response.get('data')
+
                             if not data_block:
                                 raise ValidationError("Invalid API Response: Missing data")
 
@@ -158,9 +166,10 @@ class FlightPricingWizard(models.TransientModel):
 
                                 price = first_offer.get('price', {})
                                 if price:
-                                    ticket_vals['base_price'] = price.get('base')
-                                    ticket_vals['total_amount'] = float(price.get('grandTotal', 0))
+                                    ticket_vals['base_price'] = float(price.get('base', 0.0))
+                                    ticket_vals['total_amount'] = float(price.get('grandTotal', 0.0))
                                     ticket_vals['currency'] = price.get('currency')
+                                    ticket_vals['currency_id'] = rec.currency_id.id
 
                             # -------------------------
                             # CREATE MAIN TICKET RECORD
@@ -222,10 +231,11 @@ class FlightPricingWizard(models.TransientModel):
                                     'fare_option': pricing.get('fareOption'),
                                     'traveler_type': pricing.get('travelerType'),
                                     'associated_adult_id': pricing.get('associatedAdultId'),
-                                    'base_amount': float(price.get('base', 0)),
-                                    'total_amount': float(price.get('total', 0)),
-                                    'refundable_tax': float(price.get('refundableTaxes', 0)),
+                                    'base_amount': float(price.get('base', 0.0)),
+                                    'total_amount': float(price.get('total', 0.0)),
+                                    'refundable_tax': float(price.get('refundableTaxes', 0.0)),
                                     'total_tax': total_tax,
+                                    'currency_id': ticket_id.currency_id.id
                                 })
 
                                 # SEGMENTS
@@ -414,7 +424,7 @@ class PricingTravellerLineWizard(models.TransientModel):
     emg_address = fields.Text("Address")
     emg_country_id = fields.Many2one("res.country", string="Country")
     emg_country_code = fields.Char("Country Code")
-    emg_number = fields.Char("Mobile Number")
+    emg_number = fields.Char("Mobile No")
     emg_text = fields.Text("Additional Text")
 
     @api.onchange('emg_country_id')
@@ -483,3 +493,13 @@ class PricingTravellerLineWizard(models.TransientModel):
             'attachment_id',
             string="Attachments"
         )
+
+        @api.onchange('issuance_country', 'validity_country')
+        def _onchange_country(self):
+            for rec in self:
+               if rec.issuance_country:
+                   if not rec.validity_country:
+                       rec.validity_country = rec.issuance_country.id
+
+                   if not rec.nationality_country:
+                       rec.nationality_country = rec.issuance_country.id

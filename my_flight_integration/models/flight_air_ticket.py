@@ -11,9 +11,14 @@ class AirTicket(models.Model):
     reference = fields.Char("Reference")
     booking_date = fields.Datetime("Booking Date")
     flight_offer = fields.Char("Flight Offer ID")
-    base_price = fields.Float("Base Price")
-    total_tax = fields.Float("Total tax" ,compute='_compute_total_tax')
-    total_amount = fields.Float("Total")
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Currency",
+        default=lambda self: self.env.company.currency_id.id,
+    )
+    base_price = fields.Monetary("Base Price", currency_field='currency_id')
+    total_tax = fields.Monetary("Total tax" ,compute='_compute_total_tax', currency_field='currency_id', store=True)
+    total_amount = fields.Monetary("Total", currency_field='currency_id')
     currency = fields.Char("Currency")
     provider_id = fields.Many2one('booking.conf.line', "Provider")
     flight_search_id = fields.Many2one('flight.search', "Flight Search")
@@ -24,6 +29,7 @@ class AirTicket(models.Model):
     travel_pricing_lines = fields.One2many('air.ticket.travel.pricing', 'air_ticket_id')
     travelers_ids = fields.One2many('air.ticket.travelers', 'air_ticket_id')
 
+    @api.depends('travel_pricing_lines.total_tax')
     def _compute_total_tax(self):
         for rec in self:
             total_tax = 0
@@ -37,14 +43,19 @@ class AirTicketTravelPricing(models.Model):
     _description = "Flight Air Ticket Travel pricing"
 
     air_ticket_id = fields.Many2one('air.ticket', string="Ticket id")
+    currency_id = fields.Many2one(
+        'res.currency',
+        string="Currency",
+        default=lambda self: self.env.company.currency_id.id,
+    )
     travel_id = fields.Integer("Id")
     fare_option = fields.Char("Fare Option")
     traveler_type = fields.Char("Traveler Type")
     associated_adult_id = fields.Char("Assosiated Adult")
-    base_amount = fields.Float("Base amount")
-    total_tax = fields.Float("Tax amount")
-    total_amount = fields.Float("Total Amount")
-    refundable_tax = fields.Float("Refundable Tax")
+    base_amount = fields.Monetary("Base amount", currency_field='currency_id')
+    total_tax = fields.Monetary("Tax amount", currency_field='currency_id')
+    total_amount = fields.Monetary("Total Amount", currency_field='currency_id')
+    refundable_tax = fields.Monetary("Refundable Tax", currency_field='currency_id')
     segment_ids = fields.One2many('air.ticket.travel.pricing.segment', 'traveler_pricing_id')
 
 class AirTicketTravelPricingSegment(models.Model):

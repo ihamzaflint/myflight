@@ -10,4 +10,16 @@
 <!--        <field name="numbercall">-1</field>-->
         <field name="active">True</field>
     </record>
+
+
+    <record id="ir_cron_fetch_hotel_data" model="ir.cron">
+        <field name="name">Fetch Hotel Data</field>
+        <field name="model_id" ref="my_flight_integration.model_hotel_booking"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_fetch_hotel_data()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+<!--        <field name="numbercall">-1</field>-->
+        <field name="active">True</field>
+    </record>
 </odoo>

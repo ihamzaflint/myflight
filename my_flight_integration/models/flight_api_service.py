@@ -12,7 +12,7 @@ class FlightApiService(models.AbstractModel):
     def common_get_config(self, api_type):
         """Fetch API configuration for given type."""
         config = self.env['booking.conf.line'].search([
-            ('name', '=', api_type),
+            ('code', '=', api_type),
         ], limit=1)
         if not config:
             raise UserError(_("No active configuration found for API type: %s") % api_type)
@@ -31,13 +31,13 @@ class FlightApiService(models.AbstractModel):
     @api.model
     def common_get_header(self, config):
         header = {}
-        if config.name == 'amadeus':
+        if config.code == 'amadeus':
             header['Authorization'] = f"Bearer {config.access_token}"
         return header
 
     @api.model
     def common_get_required_payload(self, config, payload):
-        if config.name == 'amadeus':
+        if config.code == 'amadeus':
             payload['grant_type'] = 'client_credentials'
         return payload
 
@@ -45,7 +45,7 @@ class FlightApiService(models.AbstractModel):
     def common_get_token(self, config, flight_search_id=None):
         book_id = flight_search_id
         payload = {}
-        if config.name == 'amadeus':
+        if config.code == 'amadeus':
             auth_url = "https://test.api.amadeus.com/v1/security/oauth2/token"
             # auth_url = f"{config.url.rstrip('/')}/security/oauth2/token"
             payload = {
@@ -103,7 +103,7 @@ class FlightApiService(models.AbstractModel):
                 is_error_response = True
                 booking_conf_line = booking_conf_line.browse([provider_id])
 
-        if booking_conf_line.name == 'amadeus' and is_error_response:
+        if booking_conf_line.code == 'amadeus' and is_error_response:
             for err in response_payload["errors"]:
                 code = err.get("code", "")
                 title = err.get("title", "")
@@ -213,6 +213,7 @@ class FlightApiService(models.AbstractModel):
                                request_payload=payload, response_payload=response.json(),
                                request_date=fields.Datetime.now()
                                )
+
                 return response
             if response.status_code:
                 log_type = self.get_log_type(response)
@@ -251,7 +252,7 @@ class FlightApiService(models.AbstractModel):
                 offers = response.get("data", [])
                 if not offers:
                     booking_id.state = 'not_found'
-                    raise ValidationError("No Data Found!")
+                    return [], 0
 
                 for offer in offers:
                     itineraries = offer.get("itineraries", [])
@@ -290,13 +291,14 @@ class FlightApiService(models.AbstractModel):
 
                     total_flight.append({
                         "name": f"✈ {carrier_name}",
-                        "price": offer.get("price", {}).get("total", "0.00"),
+                        "price": float(offer.get("price", {}).get("total", "0.00")),
                         "location": full_route,
                         "stops": total_stops,
                         "duration": duration,
                         "flight_search_id": booking_id.id,
                         "raw_json_data": json.dumps(offer),
                         "conf_id": config.id,
+                        "currency_id": booking_id.currency_id.id
                     })
 
                     total_results += 1
@@ -394,24 +396,41 @@ class FlightApiService(models.AbstractModel):
                 # -----------------------------
                 # 2. Build origin-destination segment
                 # -----------------------------
-                origin_destinations = [{
-                    "id": "1",
-                    "originLocationCode": flight_search_id.origin_id.code,
-                    "destinationLocationCode": flight_search_id.destination_id.code,
-                    "departureDateTimeRange": {
-                        "date": str(flight_search_id.travel_date)
-                    }
-                }]
-
-                if flight_search_id.trip_type == 'return' and flight_search_id.travel_return_date:
-                    origin_destinations.append({
-                        "id": "2",
-                        "originLocationCode": flight_search_id.destination_id.code,
-                        "destinationLocationCode": flight_search_id.origin_id.code,
+                origin_destinations = []
+                multiple_origin_destinations = []
+                dest = 1
+                if flight_search_id.trip_type == 'multi_city':
+                    for record in flight_search_id.multi_city_ids:
+                        multiple_origin_destinations.append(
+                            {
+                                "id": dest,
+                                "originLocationCode": record.origin_id.code,
+                                "destinationLocationCode": record.destination_id.code,
+                                "departureDateTimeRange": {
+                                    "date": str(record.travel_date)
+                                }
+                            }
+                        )
+                        dest += 1
+                else:
+                    origin_destinations = [{
+                        "id": "1",
+                        "originLocationCode": flight_search_id.origin_id.code,
+                        "destinationLocationCode": flight_search_id.destination_id.code,
                         "departureDateTimeRange": {
-                            "date": str(flight_search_id.travel_return_date)
+                            "date": str(flight_search_id.travel_date)
                         }
-                    })
+                    }]
+
+                    if flight_search_id.trip_type == 'return' and flight_search_id.travel_return_date:
+                        origin_destinations.append({
+                            "id": "2",
+                            "originLocationCode": flight_search_id.destination_id.code,
+                            "destinationLocationCode": flight_search_id.origin_id.code,
+                            "departureDateTimeRange": {
+                                "date": str(flight_search_id.travel_return_date)
+                            }
+                        })
 
                 # -----------------------------
                 # 3. Build search criteria
@@ -438,8 +457,8 @@ class FlightApiService(models.AbstractModel):
                 # 4. Build final body
                 # -----------------------------
                 body = {
-                    "currencyCode": self.env.company.currency_id.name or "USD",
-                    "originDestinations": origin_destinations,
+                    "currencyCode": flight_search_id.currency_id.name or "USD",
+                    "originDestinations":  multiple_origin_destinations if flight_search_id.multi_city_ids else origin_destinations,
                     "travelers": travelers,
                     "sources": ["GDS"],
                     "searchCriteria": search_criteria
